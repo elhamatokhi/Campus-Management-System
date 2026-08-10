@@ -1,33 +1,32 @@
 import {
-  createEventPlaceholder,
-  deleteEventPlaceholder,
-  getEventByIdPlaceholder,
-  getEventsPlaceholder,
-  updateEventPlaceholder,
+  createEventRecord,
+  deleteEventRecord,
+  getEventByIdRecord,
+  getEventRecords,
+  updateEventRecord,
 } from '../services/eventService.js';
 
-export function getEvents(request, response) {
-  const result = getEventsPlaceholder(request.query);
-  response.status(501).json(result);
+export async function getEvents(request, response) {
+  const events = await getEventRecords(request.query);
+  response.status(200).json({ success: true, data: events });
 }
 
-export function getEventById(request, response) {
-  const result = getEventByIdPlaceholder(request.params.id);
-  response.status(501).json(result);
+export async function getEventById(request, response) {
+  const event = await getEventByIdRecord(request.params.id);
+  response.status(200).json({ success: true, data: event });
 }
 
-export function createEvent(request, response) {
-  const result = createEventPlaceholder(request.body);
-  response.status(501).json(result);
+export async function createEvent(request, response) {
+  const event = await createEventRecord(request.body);
+  response.status(201).json({ success: true, data: event });
 }
 
-export function updateEvent(request, response) {
-  const result = updateEventPlaceholder(request.params.id, request.body);
-  response.status(501).json(result);
+export async function updateEvent(request, response) {
+  const event = await updateEventRecord(request.params.id, request.body);
+  response.status(200).json({ success: true, data: event });
 }
 
-export function deleteEvent(request, response) {
-  const result = deleteEventPlaceholder(request.params.id);
-  response.status(501).json(result);
+export async function deleteEvent(request, response) {
+  await deleteEventRecord(request.params.id);
+  response.status(200).json({ success: true, message: 'Event deleted' });
 }
-

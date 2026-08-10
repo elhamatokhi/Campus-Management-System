@@ -14,7 +14,7 @@ The Booking Service will eventually handle:
 - Checking event capacity before confirming a booking
 - Triggering a future Azure Function for booking notifications
 
-In Phase 5, this service provides the Express foundation and route structure only. PostgreSQL, Prisma, authentication, service-to-service calls, and real booking rules will be added later.
+As of Phase 6, booking creation, listing, reading, and cancellation use PostgreSQL through Prisma. Authentication and service-to-service business checks will be added later.
 
 ## Planned Booking Fields
 
@@ -37,12 +37,12 @@ The Booking Service will later communicate with:
 | Method | Endpoint | Status |
 | --- | --- | --- |
 | `GET` | `/health` | Implemented |
-| `POST` | `/api/bookings` | Placeholder |
-| `GET` | `/api/bookings` | Placeholder |
-| `GET` | `/api/bookings/:id` | Placeholder |
-| `DELETE` | `/api/bookings/:id` | Placeholder |
+| `POST` | `/api/bookings` | Database-backed |
+| `GET` | `/api/bookings` | Database-backed |
+| `GET` | `/api/bookings/:id` | Database-backed |
+| `DELETE` | `/api/bookings/:id` | Database-backed cancellation |
 
-Placeholder routes return `501 Not Implemented` with a clear JSON message.
+Duplicate bookings are prevented by a database constraint on `userId` and `eventId`.
 
 ## Local Development
 

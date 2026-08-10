@@ -79,9 +79,22 @@ Additional project notes are in the `docs/` directory:
 
 - [Architecture](docs/architecture.md)
 - [API Plan](docs/api.md)
+- [Database Setup](docs/database.md)
 - [Docker Plan](docs/docker.md)
 - [Kubernetes Plan](docs/kubernetes.md)
 - [Azure Deployment Plan](docs/azure-deployment.md)
+
+## Database
+
+Local PostgreSQL is configured through `docker-compose.yml`. Prisma schema, migrations, and seed data live in the `prisma/` directory.
+
+```bash
+docker compose up -d postgres
+cp .env.example .env
+npm run db:generate
+npm run db:migrate
+npm run db:seed
+```
 
 ## Suggested Commit Message
 

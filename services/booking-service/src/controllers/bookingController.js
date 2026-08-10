@@ -1,27 +1,26 @@
 import {
-  cancelBookingPlaceholder,
-  createBookingPlaceholder,
-  getBookingByIdPlaceholder,
-  getBookingsPlaceholder,
+  cancelBookingRecord,
+  createBookingRecord,
+  getBookingByIdRecord,
+  getBookingRecords,
 } from '../services/bookingService.js';
 
-export function createBooking(request, response) {
-  const result = createBookingPlaceholder(request.body);
-  response.status(501).json(result);
+export async function createBooking(request, response) {
+  const booking = await createBookingRecord(request.body);
+  response.status(201).json({ success: true, data: booking });
 }
 
-export function getBookings(request, response) {
-  const result = getBookingsPlaceholder(request.query);
-  response.status(501).json(result);
+export async function getBookings(request, response) {
+  const bookings = await getBookingRecords(request.query);
+  response.status(200).json({ success: true, data: bookings });
 }
 
-export function getBookingById(request, response) {
-  const result = getBookingByIdPlaceholder(request.params.id);
-  response.status(501).json(result);
+export async function getBookingById(request, response) {
+  const booking = await getBookingByIdRecord(request.params.id);
+  response.status(200).json({ success: true, data: booking });
 }
 
-export function cancelBooking(request, response) {
-  const result = cancelBookingPlaceholder(request.params.id);
-  response.status(501).json(result);
+export async function cancelBooking(request, response) {
+  const booking = await cancelBookingRecord(request.params.id);
+  response.status(200).json({ success: true, data: booking, message: 'Booking cancelled' });
 }
-

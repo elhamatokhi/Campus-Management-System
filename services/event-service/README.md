@@ -13,7 +13,7 @@ The Event Service will eventually handle:
 - Storing event image references
 - Integrating with Azure Blob Storage for event image uploads
 
-In Phase 4, this service provides the Express foundation and route structure only. PostgreSQL, Prisma, Azure Blob Storage, authentication, and authorization will be added later.
+As of Phase 6, event CRUD uses PostgreSQL through Prisma. Azure Blob Storage, authentication, and authorization will be added later.
 
 ## Planned Event Fields
 
@@ -34,13 +34,13 @@ In Phase 4, this service provides the Express foundation and route structure onl
 | Method | Endpoint | Status |
 | --- | --- | --- |
 | `GET` | `/health` | Implemented |
-| `GET` | `/api/events` | Placeholder |
-| `GET` | `/api/events/:id` | Placeholder |
-| `POST` | `/api/events` | Placeholder |
-| `PUT` | `/api/events/:id` | Placeholder |
-| `DELETE` | `/api/events/:id` | Placeholder |
+| `GET` | `/api/events` | Database-backed |
+| `GET` | `/api/events/:id` | Database-backed |
+| `POST` | `/api/events` | Database-backed |
+| `PUT` | `/api/events/:id` | Database-backed |
+| `DELETE` | `/api/events/:id` | Database-backed |
 
-Placeholder routes return `501 Not Implemented` with a clear JSON message.
+Admin authorization is intentionally deferred until Phase 7.
 
 ## Local Development
 
@@ -95,5 +95,5 @@ curl http://localhost:4002/api/events
 curl http://localhost:4002/api/events/example-event-id
 curl -X POST http://localhost:4002/api/events \
   -H "Content-Type: application/json" \
-  -d '{"title":"Cloud Engineering Lab","capacity":60}'
+  -d '{"title":"Cloud Engineering Lab","description":"Practical cloud workshop","category":"Academic","location":"Computing Lab B","startDate":"2026-10-14T15:30:00.000Z","endDate":"2026-10-14T17:30:00.000Z","capacity":60}'
 ```

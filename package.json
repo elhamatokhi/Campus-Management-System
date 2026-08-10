@@ -2,6 +2,7 @@
   "name": "campus-event-management-system",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "Cloud IT final project monorepo for a campus event management system.",
   "workspaces": [
     "frontend",
@@ -18,7 +19,21 @@
     "dev:booking-service": "npm run dev -w services/booking-service",
     "build": "npm run build -w frontend",
     "lint": "npm run lint -w frontend && npm run lint -w services/user-service && npm run lint -w services/event-service && npm run lint -w services/booking-service",
-    "test": "npm run test -w frontend && npm run test -w services/user-service && npm run test -w services/event-service && npm run test -w services/booking-service"
+    "test": "npm run test -w frontend && npm run test -w services/user-service && npm run test -w services/event-service && npm run test -w services/booking-service",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "prisma db seed",
+    "db:reset": "prisma migrate reset"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.14.0",
+    "bcryptjs": "^3.0.2"
+  },
+  "devDependencies": {
+    "prisma": "^6.14.0"
   },
   "engines": {
     "node": ">=20"
