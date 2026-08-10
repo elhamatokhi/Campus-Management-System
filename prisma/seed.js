@@ -74,19 +74,21 @@ async function main() {
     });
   }
 
-  await prisma.booking.upsert({
+  const existingBooking = await prisma.booking.findFirst({
     where: {
-      userId_eventId: {
         userId: student.id,
         eventId: events[0].id,
-      },
-    },
-    update: {},
-    create: {
-      userId: student.id,
-      eventId: events[0].id,
     },
   });
+
+  if (!existingBooking) {
+    await prisma.booking.create({
+      data: {
+      userId: student.id,
+      eventId: events[0].id,
+      },
+    });
+  }
 
   console.log('Seeded development data.');
   console.log(`Development users: admin@campus.test and student@campus.test`);
@@ -102,4 +104,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-

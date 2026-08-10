@@ -1,14 +1,20 @@
 import dotenv from 'dotenv';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-dotenv.config();
+const configDir = dirname(fileURLToPath(import.meta.url));
+
+dotenv.config({ path: resolve(configDir, '../../.env') });
+dotenv.config({ path: resolve(configDir, '../../../../.env') });
 
 export const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: Number(process.env.PORT || 4003),
   frontendOrigin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+  jwtSecret: process.env.JWT_SECRET || '',
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '1d',
   databaseUrl: process.env.DATABASE_URL || '',
   userServiceUrl: process.env.USER_SERVICE_URL || 'http://localhost:4001',
   eventServiceUrl: process.env.EVENT_SERVICE_URL || 'http://localhost:4002',
   bookingNotificationFunctionUrl: process.env.BOOKING_NOTIFICATION_FUNCTION_URL || '',
 };
-

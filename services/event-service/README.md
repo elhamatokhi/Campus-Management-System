@@ -13,7 +13,7 @@ The Event Service will eventually handle:
 - Storing event image references
 - Integrating with Azure Blob Storage for event image uploads
 
-As of Phase 6, event CRUD uses PostgreSQL through Prisma. Azure Blob Storage, authentication, and authorization will be added later.
+As of Phase 7, event reads are public and event write operations require an admin JWT. Azure Blob Storage will be added later.
 
 ## Planned Event Fields
 
@@ -40,7 +40,14 @@ As of Phase 6, event CRUD uses PostgreSQL through Prisma. Azure Blob Storage, au
 | `PUT` | `/api/events/:id` | Database-backed |
 | `DELETE` | `/api/events/:id` | Database-backed |
 
-Admin authorization is intentionally deferred until Phase 7.
+Admin-only routes require:
+
+```text
+Authorization: Bearer <admin-token>
+```
+
+Students receive `403 Forbidden` for create, update, and delete routes.
+Deleting an event that still has booking records returns `409 Conflict`; a soft-delete/archive policy can be added later if needed.
 
 ## Local Development
 
@@ -94,6 +101,7 @@ curl http://localhost:4002/health
 curl http://localhost:4002/api/events
 curl http://localhost:4002/api/events/example-event-id
 curl -X POST http://localhost:4002/api/events \
+  -H "Authorization: Bearer ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title":"Cloud Engineering Lab","description":"Practical cloud workshop","category":"Academic","location":"Computing Lab B","startDate":"2026-10-14T15:30:00.000Z","endDate":"2026-10-14T17:30:00.000Z","capacity":60}'
 ```

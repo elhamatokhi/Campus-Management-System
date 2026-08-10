@@ -12,7 +12,7 @@ The User Service will eventually handle:
 - User profile retrieval and updates
 - User roles
 
-As of Phase 6, registration and development profile lookup/update use PostgreSQL through Prisma. Full JWT authentication will be added later.
+As of Phase 7, registration and login use PostgreSQL, hashed passwords, and JWT authentication.
 
 ## Endpoints
 
@@ -20,11 +20,15 @@ As of Phase 6, registration and development profile lookup/update use PostgreSQL
 | --- | --- | --- |
 | `GET` | `/health` | Implemented |
 | `POST` | `/api/users/register` | Database-backed |
-| `POST` | `/api/users/login` | Placeholder until JWT phase |
-| `GET` | `/api/users/me?id=...` or `/api/users/me?email=...` | Database-backed development lookup |
-| `PUT` | `/api/users/me?id=...` or `/api/users/me?email=...` | Database-backed development update |
+| `POST` | `/api/users/login` | Database-backed JWT login |
+| `GET` | `/api/users/me` | Protected |
+| `PUT` | `/api/users/me` | Protected |
 
-The `/me` routes use query parameters temporarily because protected JWT routes are intentionally deferred until Phase 7.
+Protected routes require:
+
+```text
+Authorization: Bearer <token>
+```
 
 ## Local Development
 
@@ -78,5 +82,11 @@ curl http://localhost:4001/health
 curl -X POST http://localhost:4001/api/users/register \
   -H "Content-Type: application/json" \
   -d '{"name":"Alex Morgan","email":"alex@university.edu","password":"Password123"}'
-curl "http://localhost:4001/api/users/me?email=alex@university.edu"
+
+curl -X POST http://localhost:4001/api/users/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"student@campus.test","password":"DevPassword123!"}'
+
+curl http://localhost:4001/api/users/me \
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```

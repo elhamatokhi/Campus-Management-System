@@ -16,15 +16,60 @@ const bookingInclude = {
   event: { select: { id: true, title: true, startDate: true, location: true, capacity: true } },
 };
 
-export async function createBookingRecord(payload = {}) {
-  const userId = String(payload.userId || '').trim();
+function isAdmin(user) {
+  return user?.role === 'ADMIN';
+}
+
+function requireBookingAccess(booking, user) {
+  if (!booking) {
+    throw createHttpError(404, 'Booking not found');
+  }
+
+  if (!isAdmin(user) && booking.userId !== user.id) {
+    throw createHttpError(403, 'You can only access your own bookings');
+  }
+}
+
+export async function createBookingRecord(payload = {}, user) {
+  const userId = isAdmin(user) && payload.userId ? String(payload.userId).trim() : user?.id;
   const eventId = String(payload.eventId || '').trim();
 
   if (!userId) {
-    throw createHttpError(400, 'userId is required');
+    throw createHttpError(401, 'Authentication required');
   }
   if (!eventId) {
     throw createHttpError(400, 'eventId is required');
+  }
+
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    include: {
+      _count: {
+        select: {
+          bookings: { where: { status: BookingStatus.CONFIRMED } },
+        },
+      },
+    },
+  });
+
+  if (!event) {
+    throw createHttpError(404, 'Event not found');
+  }
+
+  const existingActiveBooking = await prisma.booking.findFirst({
+    where: {
+      userId,
+      eventId,
+      status: BookingStatus.CONFIRMED,
+    },
+  });
+
+  if (existingActiveBooking) {
+    throw createHttpError(409, 'User already has an active booking for this event');
+  }
+
+  if (event._count.bookings >= event.capacity) {
+    throw createHttpError(409, 'Event capacity is full');
   }
 
   try {
@@ -33,22 +78,24 @@ export async function createBookingRecord(payload = {}) {
       include: bookingInclude,
     });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      throw createHttpError(409, 'User already has a booking for this event');
-    }
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
-      throw createHttpError(400, 'userId or eventId does not reference an existing record');
+      throw createHttpError(400, 'userId does not reference an existing user');
     }
     throw error;
   }
 }
 
-export async function getBookingRecords(query = {}) {
+export async function getBookingRecords(query = {}, user) {
   const where = {};
 
-  if (query.userId) {
-    where.userId = String(query.userId);
+  if (isAdmin(user)) {
+    if (query.userId) {
+      where.userId = String(query.userId);
+    }
+  } else {
+    where.userId = user.id;
   }
+
   if (query.eventId) {
     where.eventId = String(query.eventId);
   }
@@ -67,20 +114,21 @@ export async function getBookingRecords(query = {}) {
   });
 }
 
-export async function getBookingByIdRecord(id) {
+export async function getBookingByIdRecord(id, user) {
   const booking = await prisma.booking.findUnique({
     where: { id },
     include: bookingInclude,
   });
 
-  if (!booking) {
-    throw createHttpError(404, 'Booking not found');
-  }
+  requireBookingAccess(booking, user);
 
   return booking;
 }
 
-export async function cancelBookingRecord(id) {
+export async function cancelBookingRecord(id, user) {
+  const booking = await prisma.booking.findUnique({ where: { id } });
+  requireBookingAccess(booking, user);
+
   try {
     return await prisma.booking.update({
       where: { id },

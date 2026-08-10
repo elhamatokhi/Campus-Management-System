@@ -16,23 +16,22 @@ All backend services will expose REST APIs and a health endpoint.
 - `GET /health`
 - `POST /api/users/register`
 - `POST /api/users/login`
-- `GET /api/users/me`
-- `PUT /api/users/me`
+- `GET /api/users/me` - requires Bearer token
+- `PUT /api/users/me` - requires Bearer token
 
 ## Event Service
 
 - `GET /health`
 - `GET /api/events`
 - `GET /api/events/:id`
-- `POST /api/events`
-- `PUT /api/events/:id`
-- `DELETE /api/events/:id`
+- `POST /api/events` - requires admin Bearer token
+- `PUT /api/events/:id` - requires admin Bearer token
+- `DELETE /api/events/:id` - requires admin Bearer token
 
 ## Booking Service
 
 - `GET /health`
-- `POST /api/bookings`
-- `GET /api/bookings`
-- `GET /api/bookings/:id`
-- `DELETE /api/bookings/:id`
-
+- `POST /api/bookings` - requires Bearer token
+- `GET /api/bookings` - requires Bearer token
+- `GET /api/bookings/:id` - requires Bearer token
+- `DELETE /api/bookings/:id` - requires Bearer token

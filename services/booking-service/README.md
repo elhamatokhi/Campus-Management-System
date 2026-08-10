@@ -14,7 +14,7 @@ The Booking Service will eventually handle:
 - Checking event capacity before confirming a booking
 - Triggering a future Azure Function for booking notifications
 
-As of Phase 6, booking creation, listing, reading, and cancellation use PostgreSQL through Prisma. Authentication and service-to-service business checks will be added later.
+As of Phase 7, booking creation, listing, reading, and cancellation require JWT authentication and use PostgreSQL through Prisma.
 
 ## Planned Booking Fields
 
@@ -42,7 +42,24 @@ The Booking Service will later communicate with:
 | `GET` | `/api/bookings/:id` | Database-backed |
 | `DELETE` | `/api/bookings/:id` | Database-backed cancellation |
 
-Duplicate bookings are prevented by a database constraint on `userId` and `eventId`.
+Protected routes require:
+
+```text
+Authorization: Bearer <token>
+```
+
+Student rules:
+
+- Students create bookings for themselves. The service uses the JWT user id and does not trust `userId` from the request body.
+- Students can list, view, and cancel only their own bookings.
+- Duplicate active bookings for the same user/event return `409 Conflict`.
+- Full events return `409 Conflict`.
+
+Admin rules:
+
+- Admin users can list and view all bookings.
+- Admin users may cancel bookings.
+- Admin users may pass `userId` when creating a booking for another user.
 
 ## Local Development
 
@@ -97,7 +114,9 @@ curl http://localhost:4003/health
 curl http://localhost:4003/api/bookings
 curl http://localhost:4003/api/bookings/example-booking-id
 curl -X POST http://localhost:4003/api/bookings \
+  -H "Authorization: Bearer STUDENT_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"userId":"user-1","eventId":"event-1"}'
-curl -X DELETE http://localhost:4003/api/bookings/example-booking-id
+  -d '{"eventId":"ai-research-showcase"}'
+curl -X DELETE http://localhost:4003/api/bookings/example-booking-id \
+  -H "Authorization: Bearer STUDENT_TOKEN"
 ```

@@ -1,9 +1,10 @@
 import { Prisma, UserRole } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../config/prisma.js';
+import { signAuthToken } from './authService.js';
 import { createHttpError } from '../utils/httpError.js';
 
-function publicUserSelect() {
+export function publicUserSelect() {
   return {
     id: true,
     name: true,
@@ -18,26 +19,11 @@ function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
 }
 
-function getUserWhere(query = {}, body = {}) {
-  const id = query.id || body.id;
-  const email = query.email || body.email;
-
-  if (id) {
-    return { id: String(id) };
-  }
-
-  if (email) {
-    return { email: normalizeEmail(email) };
-  }
-
-  throw createHttpError(400, 'Provide id or email until JWT authentication is added in Phase 7');
-}
-
 export async function registerUserRecord(payload = {}) {
   const name = String(payload.name || '').trim();
   const email = normalizeEmail(payload.email);
   const password = String(payload.password || '');
-  const role = payload.role === UserRole.ADMIN ? UserRole.ADMIN : UserRole.STUDENT;
+  const role = UserRole.STUDENT;
 
   if (!name) {
     throw createHttpError(400, 'name is required');
@@ -64,19 +50,45 @@ export async function registerUserRecord(payload = {}) {
   }
 }
 
-export function loginUserPending(payload) {
+export async function loginUserRecord(payload = {}) {
+  const email = normalizeEmail(payload.email);
+  const password = String(payload.password || '');
+
+  if (!email || !email.includes('@')) {
+    throw createHttpError(400, 'A valid email is required');
+  }
+  if (!password) {
+    throw createHttpError(400, 'password is required');
+  }
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    throw createHttpError(401, 'Invalid email or password');
+  }
+
+  const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+  if (!passwordMatches) {
+    throw createHttpError(401, 'Invalid email or password');
+  }
+
+  const safeUser = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
+
   return {
-    success: false,
-    message:
-      'Login route is available, but JWT authentication will be implemented in Phase 7. Registration and profile persistence are database-backed now.',
-    endpoint: 'POST /api/users/login',
-    receivedFields: Object.keys(payload || {}),
+    user: safeUser,
+    token: signAuthToken(safeUser),
   };
 }
 
-export async function getCurrentUserRecord(query = {}) {
+export async function getCurrentUserRecord(userId) {
   const user = await prisma.user.findUnique({
-    where: getUserWhere(query),
+    where: { id: userId },
     select: publicUserSelect(),
   });
 
@@ -87,7 +99,7 @@ export async function getCurrentUserRecord(query = {}) {
   return user;
 }
 
-export async function updateCurrentUserRecord(query = {}, payload = {}) {
+export async function updateCurrentUserRecord(userId, payload = {}) {
   const data = {};
 
   if (payload.name !== undefined) {
@@ -110,7 +122,7 @@ export async function updateCurrentUserRecord(query = {}, payload = {}) {
 
   try {
     return await prisma.user.update({
-      where: getUserWhere(query, payload),
+      where: { id: userId },
       data,
       select: publicUserSelect(),
     });
