@@ -1,0 +1,22 @@
+{
+  "name": "campus-event-management-system",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cloud IT final project monorepo for a campus event management system.",
+  "workspaces": [
+    "frontend",
+    "services/user-service",
+    "services/event-service",
+    "services/booking-service",
+    "azure-function"
+  ],
+  "scripts": {
+    "dev": "echo \"Phase 1 foundation ready. Frontend and service dev scripts will be added in later phases.\"",
+    "test": "echo \"Tests will be added as services are implemented.\"",
+    "lint": "echo \"Linting will be configured after the first application code is added.\""
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
+
