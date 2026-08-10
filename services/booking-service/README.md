@@ -89,11 +89,13 @@ http://localhost:4003
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` inside this directory for local overrides:
+For normal monorepo development, put local configuration in the root `.env` file:
 
 ```bash
-cp services/booking-service/.env.example services/booking-service/.env
+cp .env.example .env
 ```
+
+The Booking Service loads the root `.env` first. A `services/booking-service/.env` file is optional and only fills variables that are missing from the root `.env`.
 
 Available variables:
 

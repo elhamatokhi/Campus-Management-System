@@ -16,6 +16,7 @@ export default function EditEvent() {
   const [event, setEvent] = useState(null);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [uploadStatus, setUploadStatus] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -29,21 +30,25 @@ export default function EditEvent() {
   const handleSubmit = async (payload) => {
     setError('');
     setMessage('');
+    setUploadStatus('');
     setIsSubmitting(true);
     try {
       const { imageFile, ...eventPayload } = payload;
 
       if (imageFile && imageFile.size > 0) {
+        setUploadStatus('Uploading replacement image...');
         const uploadResponse = await uploadEventImage(token, imageFile);
         eventPayload.imageUrl = uploadResponse.data.imageUrl;
       }
 
+      setUploadStatus('Saving event...');
       const response = await updateEvent(token, id, eventPayload);
       setEvent(response.data);
       setMessage('Event updated.');
     } catch (apiError) {
       setError(apiError.message);
     } finally {
+      setUploadStatus('');
       setIsSubmitting(false);
     }
   };
@@ -98,6 +103,7 @@ export default function EditEvent() {
         onSubmit={handleSubmit}
         error={error}
         message={message}
+        uploadStatus={uploadStatus}
         isSubmitting={isSubmitting}
       />
       <div className="mt-6 max-w-3xl rounded-md border border-red-200 bg-red-50 p-5">

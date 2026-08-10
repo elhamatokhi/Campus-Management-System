@@ -3,9 +3,11 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const configDir = dirname(fileURLToPath(import.meta.url));
+const serviceEnvPath = resolve(configDir, '../../.env');
+const rootEnvPath = resolve(configDir, '../../../../.env');
 
-dotenv.config({ path: resolve(configDir, '../../.env') });
-dotenv.config({ path: resolve(configDir, '../../../../.env') });
+dotenv.config({ path: rootEnvPath, quiet: true });
+dotenv.config({ path: serviceEnvPath, quiet: true });
 
 export const env = {
   nodeEnv: process.env.NODE_ENV || 'development',

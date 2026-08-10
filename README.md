@@ -96,13 +96,15 @@ student@campus.test / DevPassword123!
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` before running services that need local configuration:
+Copy the root `.env.example` to a root `.env` before running services that need local configuration:
 
 ```bash
 cp .env.example .env
 ```
 
 Never commit real secrets.
+
+The backend services load the root `.env` first when started from the monorepo scripts. Service-level `.env` files are optional and should only be used for local overrides that are not already defined in the root `.env`.
 
 ## Documentation
 

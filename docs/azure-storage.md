@@ -25,7 +25,7 @@ For the current frontend to display uploaded images directly, configure the cont
 
 ## Environment Variables
 
-Set these for the Event Service:
+Set these in the root `.env` for local monorepo development:
 
 ```text
 AZURE_STORAGE_CONNECTION_STRING=your_storage_connection_string
@@ -64,4 +64,3 @@ Default size limit:
 ```
 
 If Azure credentials are missing, the Event Service still starts normally. The upload endpoint returns a clear configuration error only when an upload is attempted.
-

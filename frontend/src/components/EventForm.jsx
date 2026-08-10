@@ -1,12 +1,50 @@
+import { useEffect, useState } from 'react';
 import Button from './Button.jsx';
 import Input from './Input.jsx';
 import Notice from './Notice.jsx';
 import { buildIsoDateTime, toDateInputValue, toTimeInputValue } from '../utils/eventFormat.js';
 
-export default function EventForm({ event, submitLabel, onSubmit, error, message, isSubmitting = false }) {
+const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const maxImageSizeBytes = 5 * 1024 * 1024;
+
+function validateImageFile(file) {
+  if (!file || file.size === 0) return '';
+
+  if (!allowedImageTypes.includes(file.type)) {
+    return 'Use a JPG, PNG, or WebP image.';
+  }
+
+  if (file.size > maxImageSizeBytes) {
+    return 'Image must be 5 MB or smaller.';
+  }
+
+  return '';
+}
+
+export default function EventForm({
+  event,
+  submitLabel,
+  onSubmit,
+  error,
+  message,
+  uploadStatus,
+  isSubmitting = false,
+}) {
   const startDate = toDateInputValue(event?.startDate);
   const startTime = toTimeInputValue(event?.startDate);
   const endTime = toTimeInputValue(event?.endDate);
+  const [previewUrl, setPreviewUrl] = useState(event?.imageUrl ?? '');
+  const [imageError, setImageError] = useState('');
+
+  useEffect(() => {
+    setPreviewUrl(event?.imageUrl ?? '');
+  }, [event?.imageUrl]);
+
+  useEffect(() => () => {
+    if (previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
+  }, [previewUrl]);
 
   return (
     <form
@@ -17,6 +55,13 @@ export default function EventForm({ event, submitLabel, onSubmit, error, message
         const date = formData.get('date');
         const start = formData.get('startTime');
         const end = formData.get('endTime');
+        const imageFile = formData.get('imageFile');
+        const validationMessage = validateImageFile(imageFile);
+
+        if (validationMessage) {
+          setImageError(validationMessage);
+          return;
+        }
 
         onSubmit({
           title: formData.get('title'),
@@ -26,8 +71,7 @@ export default function EventForm({ event, submitLabel, onSubmit, error, message
           startDate: buildIsoDateTime(date, start),
           endDate: buildIsoDateTime(date, end),
           capacity: Number(formData.get('capacity')),
-          imageUrl: formData.get('imageUrl') || null,
-          imageFile: formData.get('imageFile'),
+          imageFile,
         });
       }}
     >
@@ -74,14 +118,16 @@ export default function EventForm({ event, submitLabel, onSubmit, error, message
         />
       </label>
 
-      <Input
-        name="imageUrl"
-        label="Image URL"
-        id="event-image"
-        defaultValue={event?.imageUrl ?? ''}
-        placeholder="Uploaded image URL from Blob Storage"
-        containerClassName="mt-5"
-      />
+      {previewUrl && (
+        <div className="mt-5">
+          <span className="mb-2 block text-sm font-semibold text-campus-navy">Event image</span>
+          <img
+            src={previewUrl}
+            alt={event?.title ? `${event.title} event preview` : 'Selected event preview'}
+            className="h-56 w-full rounded-md border border-slate-200 object-cover shadow-sm"
+          />
+        </div>
+      )}
 
       <label className="mt-5 block">
         <span className="mb-2 block text-sm font-semibold text-campus-navy">Upload image</span>
@@ -91,15 +137,39 @@ export default function EventForm({ event, submitLabel, onSubmit, error, message
           name="imageFile"
           type="file"
           accept="image/jpeg,image/png,image/webp"
+          onChange={(changeEvent) => {
+            const [file] = changeEvent.target.files;
+            const validationMessage = validateImageFile(file);
+            setImageError(validationMessage);
+
+            if (!file || validationMessage) {
+              setPreviewUrl(event?.imageUrl ?? '');
+              return;
+            }
+
+            const objectUrl = URL.createObjectURL(file);
+            setPreviewUrl(objectUrl);
+          }}
         />
       </label>
+      <p className="mt-2 text-sm text-slate-500">JPG, PNG, or WebP. Maximum 5 MB.</p>
 
       <div className="mt-6 flex flex-wrap gap-3">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving...' : submitLabel}
+        <Button type="submit" disabled={isSubmitting || Boolean(imageError)}>
+          {isSubmitting ? uploadStatus || 'Saving...' : submitLabel}
         </Button>
       </div>
 
+      {uploadStatus && (
+        <div className="mt-5">
+          <Notice>{uploadStatus}</Notice>
+        </div>
+      )}
+      {imageError && (
+        <div className="mt-5">
+          <Notice tone="warning">{imageError}</Notice>
+        </div>
+      )}
       {error && (
         <div className="mt-5">
           <Notice tone="warning">{error}</Notice>
