@@ -11,12 +11,13 @@
     "azure-function"
   ],
   "scripts": {
-    "dev": "echo \"Phase 1 foundation ready. Frontend and service dev scripts will be added in later phases.\"",
-    "test": "echo \"Tests will be added as services are implemented.\"",
-    "lint": "echo \"Linting will be configured after the first application code is added.\""
+    "dev": "npm run dev -w frontend",
+    "dev:frontend": "npm run dev -w frontend",
+    "build": "npm run build -w frontend",
+    "lint": "npm run lint -w frontend",
+    "test": "npm run test -w frontend"
   },
   "engines": {
     "node": ">=20"
   }
 }
-

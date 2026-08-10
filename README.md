@@ -42,9 +42,9 @@ The backend will be split into three services:
 
 ## Current Phase
 
-Phase 1: project foundation.
+Phase 2: frontend shell.
 
-This phase creates the repository structure, documentation starting points, and environment examples. Application code will be added in later phases.
+The React + Vite frontend is set up with Tailwind CSS, React Router, reusable UI components, and mock event data. Backend services are not implemented yet.
 
 ## Local Development
 
@@ -61,7 +61,7 @@ npm install
 npm run dev
 ```
 
-At the end of Phase 1, `npm run dev` only confirms that the foundation is ready. Real frontend and backend development servers will be added in the next phases.
+At the end of Phase 2, `npm run dev` starts the frontend development server.
 
 ## Environment Variables
 
@@ -88,4 +88,3 @@ Additional project notes are in the `docs/` directory:
 ```text
 feat: initialize project structure
 ```
-
