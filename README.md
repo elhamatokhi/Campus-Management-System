@@ -111,6 +111,7 @@ Additional project notes are in the `docs/` directory:
 - [Architecture](docs/architecture.md)
 - [API Plan](docs/api.md)
 - [Database Setup](docs/database.md)
+- [Azure Blob Storage](docs/azure-storage.md)
 - [Docker Plan](docs/docker.md)
 - [Kubernetes Plan](docs/kubernetes.md)
 - [Azure Deployment Plan](docs/azure-deployment.md)

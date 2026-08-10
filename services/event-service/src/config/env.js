@@ -16,4 +16,5 @@ export const env = {
   databaseUrl: process.env.DATABASE_URL || '',
   azureStorageConnectionString: process.env.AZURE_STORAGE_CONNECTION_STRING || '',
   azureStorageContainerName: process.env.AZURE_STORAGE_CONTAINER_NAME || 'event-images',
+  maxImageUploadBytes: Number(process.env.MAX_IMAGE_UPLOAD_BYTES || 5 * 1024 * 1024),
 };

@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { deleteEvent, getEvent, updateEvent } from '../api/eventApi.js';
+import { deleteEvent, getEvent, updateEvent, uploadEventImage } from '../api/eventApi.js';
 import Button from '../components/Button.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import EventForm from '../components/EventForm.jsx';
@@ -31,7 +31,14 @@ export default function EditEvent() {
     setMessage('');
     setIsSubmitting(true);
     try {
-      const response = await updateEvent(token, id, payload);
+      const { imageFile, ...eventPayload } = payload;
+
+      if (imageFile && imageFile.size > 0) {
+        const uploadResponse = await uploadEventImage(token, imageFile);
+        eventPayload.imageUrl = uploadResponse.data.imageUrl;
+      }
+
+      const response = await updateEvent(token, id, eventPayload);
       setEvent(response.data);
       setMessage('Event updated.');
     } catch (apiError) {

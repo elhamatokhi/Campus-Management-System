@@ -13,7 +13,7 @@ The Event Service will eventually handle:
 - Storing event image references
 - Integrating with Azure Blob Storage for event image uploads
 
-As of Phase 7, event reads are public and event write operations require an admin JWT. Azure Blob Storage will be added later.
+As of Phase 9, event reads are public, event write operations require an admin JWT, and event image uploads use Azure Blob Storage.
 
 ## Planned Event Fields
 
@@ -37,6 +37,7 @@ As of Phase 7, event reads are public and event write operations require an admi
 | `GET` | `/api/events` | Database-backed |
 | `GET` | `/api/events/:id` | Database-backed |
 | `POST` | `/api/events` | Database-backed |
+| `POST` | `/api/events/upload-image` | Admin-only Azure Blob upload |
 | `PUT` | `/api/events/:id` | Database-backed |
 | `DELETE` | `/api/events/:id` | Database-backed |
 
@@ -89,8 +90,9 @@ Available variables:
 - `NODE_ENV`: runtime environment
 - `FRONTEND_ORIGIN`: allowed frontend origin for CORS
 - `DATABASE_URL`: future PostgreSQL connection string
-- `AZURE_STORAGE_CONNECTION_STRING`: future Azure Blob Storage connection string
-- `AZURE_STORAGE_CONTAINER_NAME`: future Blob Storage container name for event images
+- `AZURE_STORAGE_CONNECTION_STRING`: Azure Blob Storage connection string
+- `AZURE_STORAGE_CONTAINER_NAME`: Blob Storage container name for event images
+- `MAX_IMAGE_UPLOAD_BYTES`: image upload size limit, default `5242880`
 
 Do not commit real secrets.
 
@@ -104,4 +106,8 @@ curl -X POST http://localhost:4002/api/events \
   -H "Authorization: Bearer ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title":"Cloud Engineering Lab","description":"Practical cloud workshop","category":"Academic","location":"Computing Lab B","startDate":"2026-10-14T15:30:00.000Z","endDate":"2026-10-14T17:30:00.000Z","capacity":60}'
+
+curl -X POST http://localhost:4002/api/events/upload-image \
+  -H "Authorization: Bearer ADMIN_TOKEN" \
+  -F "image=@/path/to/event-image.png"
 ```

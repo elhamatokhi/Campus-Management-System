@@ -14,13 +14,15 @@ export class ApiError extends Error {
 }
 
 export async function apiRequest(service, path, { method = 'GET', body, token } = {}) {
+  const isFormData = body instanceof FormData;
+
   const response = await fetch(`${serviceUrls[service]}${path}`, {
     method,
     headers: {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    ...(body ? { body: JSON.stringify(body) } : {}),
+    ...(body ? { body: isFormData ? body : JSON.stringify(body) } : {}),
   });
 
   const data = await response.json().catch(() => ({}));
@@ -31,4 +33,3 @@ export async function apiRequest(service, path, { method = 'GET', body, token } 
 
   return data;
 }
-

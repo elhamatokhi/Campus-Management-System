@@ -5,6 +5,7 @@ import {
   getEventRecords,
   updateEventRecord,
 } from '../services/eventService.js';
+import { uploadEventImage } from '../services/blobStorageService.js';
 
 export async function getEvents(request, response) {
   const events = await getEventRecords(request.query);
@@ -29,4 +30,9 @@ export async function updateEvent(request, response) {
 export async function deleteEvent(request, response) {
   await deleteEventRecord(request.params.id);
   response.status(200).json({ success: true, message: 'Event deleted' });
+}
+
+export async function uploadImage(request, response) {
+  const result = await uploadEventImage(request.file);
+  response.status(201).json({ success: true, data: result });
 }

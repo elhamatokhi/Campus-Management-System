@@ -31,3 +31,13 @@ export function deleteEvent(token, id) {
   });
 }
 
+export function uploadEventImage(token, file) {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  return apiRequest('event', '/api/events/upload-image', {
+    method: 'POST',
+    token,
+    body: formData,
+  });
+}

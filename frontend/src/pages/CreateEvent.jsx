@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { createEvent } from '../api/eventApi.js';
+import { createEvent, uploadEventImage } from '../api/eventApi.js';
 import Button from '../components/Button.jsx';
 import EventForm from '../components/EventForm.jsx';
 import PageShell from '../components/PageShell.jsx';
@@ -16,7 +16,14 @@ export default function CreateEvent() {
     setError('');
     setIsSubmitting(true);
     try {
-      await createEvent(token, payload);
+      const { imageFile, ...eventPayload } = payload;
+
+      if (imageFile && imageFile.size > 0) {
+        const uploadResponse = await uploadEventImage(token, imageFile);
+        eventPayload.imageUrl = uploadResponse.data.imageUrl;
+      }
+
+      await createEvent(token, eventPayload);
       navigate('/admin');
     } catch (apiError) {
       setError(apiError.message);

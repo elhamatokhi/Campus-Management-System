@@ -6,12 +6,17 @@ export function errorHandler(error, request, response, next) {
     return;
   }
 
-  const statusCode = error.statusCode || 500;
+  const statusCode = error.code === 'LIMIT_FILE_SIZE' ? 400 : error.statusCode || 500;
 
   response.status(statusCode).json({
     success: false,
-    message: statusCode === 500 ? 'Internal server error' : error.message,
+    message: error.code === 'LIMIT_FILE_SIZE'
+      ? 'Image file is too large'
+      : error.expose
+        ? error.message
+        : statusCode === 500
+          ? 'Internal server error'
+          : error.message,
     ...(env.nodeEnv === 'development' && { details: error.message }),
   });
 }
-

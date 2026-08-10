@@ -27,6 +27,7 @@ export default function EventForm({ event, submitLabel, onSubmit, error, message
           endDate: buildIsoDateTime(date, end),
           capacity: Number(formData.get('capacity')),
           imageUrl: formData.get('imageUrl') || null,
+          imageFile: formData.get('imageFile'),
         });
       }}
     >
@@ -78,9 +79,20 @@ export default function EventForm({ event, submitLabel, onSubmit, error, message
         label="Image URL"
         id="event-image"
         defaultValue={event?.imageUrl ?? ''}
-        placeholder="Image reference will later come from Blob Storage"
+        placeholder="Uploaded image URL from Blob Storage"
         containerClassName="mt-5"
       />
+
+      <label className="mt-5 block">
+        <span className="mb-2 block text-sm font-semibold text-campus-navy">Upload image</span>
+        <input
+          className="focus-ring w-full rounded-md border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm file:mr-4 file:rounded-md file:border-0 file:bg-campus-mist file:px-3 file:py-2 file:text-sm file:font-semibold file:text-campus-teal"
+          id="event-image-file"
+          name="imageFile"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+        />
+      </label>
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Button type="submit" disabled={isSubmitting}>

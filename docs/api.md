@@ -41,6 +41,7 @@ Authorization: Bearer <token>
 - `GET /api/events`
 - `GET /api/events/:id`
 - `POST /api/events` - requires admin Bearer token
+- `POST /api/events/upload-image` - requires admin Bearer token and multipart `image`
 - `PUT /api/events/:id` - requires admin Bearer token
 - `DELETE /api/events/:id` - requires admin Bearer token
 
