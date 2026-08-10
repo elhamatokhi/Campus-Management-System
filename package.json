@@ -15,9 +15,10 @@
     "dev:frontend": "npm run dev -w frontend",
     "dev:user-service": "npm run dev -w services/user-service",
     "dev:event-service": "npm run dev -w services/event-service",
+    "dev:booking-service": "npm run dev -w services/booking-service",
     "build": "npm run build -w frontend",
-    "lint": "npm run lint -w frontend && npm run lint -w services/user-service && npm run lint -w services/event-service",
-    "test": "npm run test -w frontend && npm run test -w services/user-service && npm run test -w services/event-service"
+    "lint": "npm run lint -w frontend && npm run lint -w services/user-service && npm run lint -w services/event-service && npm run lint -w services/booking-service",
+    "test": "npm run test -w frontend && npm run test -w services/user-service && npm run test -w services/event-service && npm run test -w services/booking-service"
   },
   "engines": {
     "node": ">=20"
