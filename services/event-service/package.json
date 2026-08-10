@@ -1,0 +1,28 @@
+{
+  "name": "event-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Event microservice for the Campus Event Management System.",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node src/server.js",
+    "start": "node src/server.js",
+    "lint": "eslint .",
+    "test": "echo \"No event-service automated tests configured yet.\""
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.0.0",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.32.0",
+    "eslint": "^9.32.0",
+    "globals": "^16.3.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
+
