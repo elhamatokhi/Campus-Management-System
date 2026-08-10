@@ -11,6 +11,22 @@ All backend services will expose REST APIs and a health endpoint.
 }
 ```
 
+## Frontend API Configuration
+
+The React app reads service URLs from:
+
+```text
+VITE_USER_SERVICE_URL
+VITE_EVENT_SERVICE_URL
+VITE_BOOKING_SERVICE_URL
+```
+
+Authenticated frontend requests send:
+
+```text
+Authorization: Bearer <token>
+```
+
 ## User Service
 
 - `GET /health`

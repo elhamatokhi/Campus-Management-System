@@ -1,18 +1,23 @@
 import { Link } from 'react-router-dom';
-import { availablePlaces, formatEventDate } from '../data/mockEvents.js';
+import { availablePlaces, formatEventDate } from '../utils/eventFormat.js';
+import { eventImageUrl } from '../utils/imageUrl.js';
 
 export default function EventCard({ event }) {
   return (
     <article className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-soft">
       <Link to={`/events/${event.id}`} aria-label={`View ${event.title}`}>
-        <img className="h-48 w-full object-cover" src={event.imageUrl} alt="" />
+        <img
+          className="h-48 w-full object-cover"
+          src={eventImageUrl(event.imageUrl)}
+          alt=""
+        />
       </Link>
       <div className="p-5">
         <div className="mb-3 flex flex-wrap items-center gap-2 text-xs font-semibold">
           <span className="rounded-full bg-campus-mist px-3 py-1 text-campus-teal">
             {event.category}
           </span>
-          <span className="text-slate-500">{formatEventDate(event.date)}</span>
+          <span className="text-slate-500">{formatEventDate(event.startDate)}</span>
         </div>
         <h2 className="text-xl font-bold text-campus-navy">
           <Link className="hover:text-campus-teal" to={`/events/${event.id}`}>
@@ -30,4 +35,3 @@ export default function EventCard({ event }) {
     </article>
   );
 }
-

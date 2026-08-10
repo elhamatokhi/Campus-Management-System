@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
 import Footer from './components/Footer.jsx';
 import Navbar from './components/Navbar.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import CreateEvent from './pages/CreateEvent.jsx';
 import EditEvent from './pages/EditEvent.jsx';
@@ -24,11 +25,11 @@ export default function App() {
           <Route path="/events/:id" element={<EventDetails />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/bookings" element={<MyBookings />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/events/new" element={<CreateEvent />} />
-          <Route path="/admin/events/:id/edit" element={<EditEvent />} />
+          <Route path="/bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/events/new" element={<ProtectedRoute requireAdmin><CreateEvent /></ProtectedRoute>} />
+          <Route path="/admin/events/:id/edit" element={<ProtectedRoute requireAdmin><EditEvent /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
@@ -36,4 +37,3 @@ export default function App() {
     </div>
   );
 }
-

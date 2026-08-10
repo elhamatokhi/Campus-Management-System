@@ -41,4 +41,17 @@ Or directly in this workspace:
 npm run dev -w frontend
 ```
 
-The frontend currently uses local placeholder data only. REST API integration will be added in a later phase.
+The frontend uses the User, Event, and Booking REST services. Configure service URLs with:
+
+```text
+VITE_USER_SERVICE_URL=http://localhost:4001
+VITE_EVENT_SERVICE_URL=http://localhost:4002
+VITE_BOOKING_SERVICE_URL=http://localhost:4003
+```
+
+Login with seeded development accounts:
+
+```text
+admin@campus.test / DevPassword123!
+student@campus.test / DevPassword123!
+```

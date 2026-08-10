@@ -1,20 +1,51 @@
 import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { cancelBooking, getBookings } from '../api/bookingApi.js';
 import Button from '../components/Button.jsx';
-import Notice from '../components/Notice.jsx';
+import ErrorState from '../components/ErrorState.jsx';
+import LoadingState from '../components/LoadingState.jsx';
 import PageShell from '../components/PageShell.jsx';
-import { formatEventDate, mockBookings } from '../data/mockEvents.js';
+import Notice from '../components/Notice.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import { formatEventDate, formatEventTime } from '../utils/eventFormat.js';
+import { eventImageUrl } from '../utils/imageUrl.js';
 
 export default function MyBookings() {
-  // TODO: Replace this development-only page access with a protected route after authentication is implemented.
-  const handleCancel = () => {
-    window.alert('Backend integration coming in Phase 3+. This demo button does not cancel a real booking yet.');
+  const { token } = useAuth();
+  const [bookings, setBookings] = useState([]);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadBookings = useCallback(() => {
+    setIsLoading(true);
+    getBookings(token)
+      .then((response) => setBookings(response.data))
+      .catch((apiError) => setError(apiError.message))
+      .finally(() => setIsLoading(false));
+  }, [token]);
+
+  useEffect(() => {
+    loadBookings();
+  }, [loadBookings]);
+
+  const handleCancel = async (bookingId) => {
+    setError('');
+    setMessage('');
+    try {
+      await cancelBooking(token, bookingId);
+      setMessage('Booking cancelled.');
+      loadBookings();
+    } catch (apiError) {
+      setError(apiError.message);
+    }
   };
 
   return (
     <PageShell
       eyebrow="My Bookings"
       title="Your upcoming reservations"
-      description="These booking records use local placeholder data until the Booking Service is available."
+      description="Bookings loaded from the Booking Service for your authenticated account."
     >
       <div className="mb-6 flex flex-wrap gap-3">
         <Link to="/events">
@@ -22,21 +53,26 @@ export default function MyBookings() {
         </Link>
       </div>
 
-      <div className="mb-6 grid gap-4">
-        <Notice>
-          Development preview: these sample bookings represent what the logged-in student will see after authentication and the Booking Service are connected.
-        </Notice>
-      </div>
+      {message && <div className="mb-6"><Notice>{message}</Notice></div>}
+      {error && <div className="mb-6"><ErrorState title="Booking error" message={error} /></div>}
+      {isLoading && <LoadingState message="Loading bookings..." />}
+
+      {!isLoading && bookings.length === 0 && (
+        <div className="rounded-md border border-slate-200 bg-white p-8 text-center">
+          <h2 className="text-xl font-bold text-campus-navy">No bookings yet</h2>
+          <p className="mt-2 text-sm text-slate-600">Book an event to see it here.</p>
+        </div>
+      )}
 
       <div className="grid gap-4">
-        {mockBookings.map((booking) => (
+        {bookings.map((booking) => (
           <article
             key={booking.id}
             className="grid gap-4 rounded-md border border-slate-200 bg-white p-5 shadow-sm md:grid-cols-[120px_1fr_auto] md:items-center"
           >
             <img
               className="h-24 w-full rounded-md object-cover md:w-28"
-              src={booking.event.imageUrl}
+              src={eventImageUrl(booking.event.imageUrl)}
               alt=""
             />
             <div>
@@ -45,7 +81,7 @@ export default function MyBookings() {
               </p>
               <h2 className="mt-1 text-xl font-bold text-campus-navy">{booking.event.title}</h2>
               <p className="mt-2 text-sm text-slate-600">
-                {formatEventDate(booking.event.date)} at {booking.event.time} - {booking.event.location}
+                {formatEventDate(booking.event.startDate)} at {formatEventTime(booking.event.startDate)} - {booking.event.location}
               </p>
             </div>
             <div className="flex gap-2 md:flex-col">
@@ -54,7 +90,7 @@ export default function MyBookings() {
                   View
                 </Button>
               </Link>
-              <Button variant="danger" className="w-full" onClick={handleCancel}>
+              <Button variant="danger" className="w-full" onClick={() => handleCancel(booking.id)}>
                 Cancel
               </Button>
             </div>

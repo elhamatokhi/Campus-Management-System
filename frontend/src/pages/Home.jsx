@@ -1,21 +1,30 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { getEvents } from '../api/eventApi.js';
 import campusHero from '../assets/campus-hero.png';
 import Button from '../components/Button.jsx';
 import EventCard from '../components/EventCard.jsx';
 import PageShell from '../components/PageShell.jsx';
 import Notice from '../components/Notice.jsx';
-import { availablePlaces, events } from '../data/mockEvents.js';
-
-const demoBookings = events.reduce((sum, event) => sum + event.booked, 0);
-const demoCapacity = events.reduce((sum, event) => sum + availablePlaces(event), 0);
-
-const stats = [
-  { label: 'Demo events listed', value: events.length },
-  { label: 'Demo booked seats', value: demoBookings },
-  { label: 'Demo open seats', value: demoCapacity },
-];
+import { availablePlaces } from '../utils/eventFormat.js';
 
 export default function Home() {
+  const [events, setEvents] = useState([]);
+
+  useEffect(() => {
+    getEvents()
+      .then((response) => setEvents(response.data))
+      .catch(() => setEvents([]));
+  }, []);
+
+  const bookedSeats = events.reduce((sum, event) => sum + (event._count?.bookings ?? 0), 0);
+  const openSeats = events.reduce((sum, event) => sum + availablePlaces(event), 0);
+  const stats = [
+    { label: 'Events listed', value: events.length },
+    { label: 'Booked seats', value: bookedSeats },
+    { label: 'Open seats', value: openSeats },
+  ];
+
   return (
     <>
       <section className="bg-campus-navy text-white">
@@ -50,7 +59,7 @@ export default function Home() {
 
       <section className="border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-          <Notice>Demo data: these numbers are calculated from local placeholder events and will later come from REST APIs.</Notice>
+          <Notice>Live data: these numbers are derived from the Event Service.</Notice>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
             {stats.map((stat) => (
               <div key={stat.label} className="rounded-md border border-slate-200 p-5">
@@ -65,13 +74,17 @@ export default function Home() {
       <PageShell
         eyebrow="Featured"
         title="Popular upcoming events"
-        description="These mock events show how the frontend will look before the REST microservices are connected."
+        description="Upcoming events loaded from the Event Service."
       >
-        <div className="grid gap-6 md:grid-cols-3">
+        {events.length > 0 ? <div className="grid gap-6 md:grid-cols-3">
           {events.slice(0, 3).map((event) => (
             <EventCard key={event.id} event={event} />
           ))}
-        </div>
+        </div> : (
+          <div className="rounded-md border border-slate-200 bg-white p-6 text-sm text-slate-600">
+            Start the Event Service to show featured events.
+          </div>
+        )}
       </PageShell>
     </>
   );

@@ -52,7 +52,7 @@ Requirements:
 
 - Node.js 20 or newer
 - npm
-- Docker Desktop, for later Docker Compose phases
+- Docker Desktop, for local PostgreSQL
 
 Initial setup:
 
@@ -61,7 +61,38 @@ npm install
 npm run dev
 ```
 
-At the end of Phase 2, `npm run dev` starts the frontend development server.
+Start the local database and apply Prisma setup:
+
+```bash
+docker compose up -d postgres
+cp .env.example .env
+npm install
+npm run db:generate
+npm run db:migrate
+npm run db:seed
+```
+
+Run the full stack in separate terminals:
+
+```bash
+npm run dev:user-service
+npm run dev:event-service
+npm run dev:booking-service
+npm run dev:frontend
+```
+
+Open:
+
+```text
+http://localhost:5173
+```
+
+Development users after seeding:
+
+```text
+admin@campus.test / DevPassword123!
+student@campus.test / DevPassword123!
+```
 
 ## Environment Variables
 

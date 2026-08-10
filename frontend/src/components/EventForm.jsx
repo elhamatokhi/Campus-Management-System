@@ -1,28 +1,42 @@
-import { useState } from 'react';
 import Button from './Button.jsx';
 import Input from './Input.jsx';
 import Notice from './Notice.jsx';
+import { buildIsoDateTime, toDateInputValue, toTimeInputValue } from '../utils/eventFormat.js';
 
-export default function EventForm({ event, submitLabel }) {
-  const [message, setMessage] = useState('');
-  const showPendingMessage = () => {
-    setMessage('Backend integration coming in Phase 3+. This form does not save event data yet.');
-  };
+export default function EventForm({ event, submitLabel, onSubmit, error, message, isSubmitting = false }) {
+  const startDate = toDateInputValue(event?.startDate);
+  const startTime = toTimeInputValue(event?.startDate);
+  const endTime = toTimeInputValue(event?.endDate);
 
   return (
     <form
       className="max-w-3xl rounded-md border border-slate-200 bg-white p-6 shadow-sm"
       onSubmit={(formEvent) => {
         formEvent.preventDefault();
-        showPendingMessage();
+        const formData = new FormData(formEvent.currentTarget);
+        const date = formData.get('date');
+        const start = formData.get('startTime');
+        const end = formData.get('endTime');
+
+        onSubmit({
+          title: formData.get('title'),
+          description: formData.get('description'),
+          category: formData.get('category'),
+          location: formData.get('location'),
+          startDate: buildIsoDateTime(date, start),
+          endDate: buildIsoDateTime(date, end),
+          capacity: Number(formData.get('capacity')),
+          imageUrl: formData.get('imageUrl') || null,
+        });
       }}
     >
       <div className="grid gap-5 sm:grid-cols-2">
-        <Input label="Title" id="event-title" defaultValue={event?.title ?? ''} placeholder="Event title" />
+        <Input name="title" label="Title" id="event-title" defaultValue={event?.title ?? ''} placeholder="Event title" />
         <label className="block">
           <span className="mb-2 block text-sm font-semibold text-campus-navy">Category</span>
           <select
             id="event-category"
+            name="category"
             defaultValue={event?.category ?? 'Academic'}
             className="focus-ring w-full rounded-md border border-slate-300 bg-white px-4 py-3 text-sm"
           >
@@ -33,11 +47,12 @@ export default function EventForm({ event, submitLabel }) {
             <option>Wellbeing</option>
           </select>
         </label>
-        <Input label="Date" id="event-date" type="date" defaultValue={event?.date ?? '2026-09-30'} />
-        <Input label="Start time" id="event-time" type="time" defaultValue={event?.time ?? '14:00'} />
-        <Input label="End time" id="event-end-time" type="time" defaultValue={event?.endTime ?? '16:00'} />
-        <Input label="Capacity" id="event-capacity" type="number" defaultValue={event?.capacity ?? 100} />
+        <Input name="date" label="Date" id="event-date" type="date" defaultValue={startDate || '2026-09-30'} />
+        <Input name="startTime" label="Start time" id="event-time" type="time" defaultValue={startTime || '14:00'} />
+        <Input name="endTime" label="End time" id="event-end-time" type="time" defaultValue={endTime || '16:00'} />
+        <Input name="capacity" label="Capacity" id="event-capacity" type="number" defaultValue={event?.capacity ?? 100} />
         <Input
+          name="location"
           label="Location"
           id="event-location"
           defaultValue={event?.location ?? ''}
@@ -50,14 +65,16 @@ export default function EventForm({ event, submitLabel }) {
         <span className="mb-2 block text-sm font-semibold text-campus-navy">Description</span>
         <textarea
           id="event-description"
+          name="description"
           rows="5"
-          defaultValue={event?.longDescription ?? ''}
+          defaultValue={event?.description ?? ''}
           placeholder="Describe the event for students"
           className="focus-ring w-full rounded-md border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm placeholder:text-slate-400"
         />
       </label>
 
       <Input
+        name="imageUrl"
         label="Image URL"
         id="event-image"
         defaultValue={event?.imageUrl ?? ''}
@@ -66,12 +83,16 @@ export default function EventForm({ event, submitLabel }) {
       />
 
       <div className="mt-6 flex flex-wrap gap-3">
-        <Button type="submit">{submitLabel}</Button>
-        <Button variant="secondary" onClick={showPendingMessage}>
-          Save draft
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Saving...' : submitLabel}
         </Button>
       </div>
 
+      {error && (
+        <div className="mt-5">
+          <Notice tone="warning">{error}</Notice>
+        </div>
+      )}
       {message && (
         <div className="mt-5">
           <Notice>{message}</Notice>

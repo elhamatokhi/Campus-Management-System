@@ -1,36 +1,66 @@
-import { Link } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import Button from '../components/Button.jsx';
 import Input from '../components/Input.jsx';
 import Notice from '../components/Notice.jsx';
 import PageShell from '../components/PageShell.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Login() {
-  const [message, setMessage] = useState('');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, login } = useAuth();
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const redirectTo = location.state?.from?.pathname || '/events';
+  const successMessage = location.state?.message;
+
+  if (isAuthenticated) {
+    return <Navigate to={redirectTo} replace />;
+  }
 
   return (
     <PageShell
       eyebrow="Login"
       title="Welcome back"
-      description="Authentication will be connected to the User Service in a later phase."
+      description="Login with your campus account to manage bookings and profile details."
     >
       <form
         className="max-w-lg rounded-md border border-slate-200 bg-white p-6 shadow-sm"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
-          setMessage('Authentication will be connected in the User Service phase. No login request was sent.');
+          setError('');
+          setIsSubmitting(true);
+
+          const formData = new FormData(event.currentTarget);
+          try {
+            await login({
+              email: formData.get('email'),
+              password: formData.get('password'),
+            });
+            navigate(redirectTo, { replace: true });
+          } catch (apiError) {
+            setError(apiError.message);
+          } finally {
+            setIsSubmitting(false);
+          }
         }}
       >
         <div className="grid gap-5">
-          <Input label="Email address" id="email" type="email" placeholder="student@university.edu" />
-          <Input label="Password" id="password" type="password" placeholder="Enter your password" />
-          <Button type="submit" className="w-full">
-            Login
+          <Input name="email" label="Email address" id="email" type="email" placeholder="student@campus.test" />
+          <Input name="password" label="Password" id="password" type="password" placeholder="Enter your password" />
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Logging in...' : 'Login'}
           </Button>
         </div>
-        {message && (
+        {error && (
           <div className="mt-5">
-            <Notice>{message}</Notice>
+            <Notice tone="warning">{error}</Notice>
+          </div>
+        )}
+        {successMessage && !error && (
+          <div className="mt-5">
+            <Notice>{successMessage}</Notice>
           </div>
         )}
         <p className="mt-6 text-center text-sm text-slate-600">
