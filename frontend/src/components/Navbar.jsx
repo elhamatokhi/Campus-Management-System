@@ -27,7 +27,7 @@ export default function Navbar() {
     logout();
     navigate('/login', {
       replace: true,
-      state: { message: 'You have been logged out successfully.' },
+      state: { loggedOut: true },
     });
   };
 

@@ -1,5 +1,5 @@
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Button from '../components/Button.jsx';
 import Input from '../components/Input.jsx';
 import Notice from '../components/Notice.jsx';
@@ -12,10 +12,28 @@ export default function Login() {
   const { isAuthenticated, login } = useAuth();
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [logoutMessage, setLogoutMessage] = useState('');
   const redirectTo = location.state?.from?.pathname || '/events';
-  const successMessage = location.state?.message;
+  const isLogoutRedirect = location.state?.loggedOut === true;
 
-  if (isAuthenticated) {
+  useEffect(() => {
+    if (!isLogoutRedirect) return;
+
+    setLogoutMessage('You have been logged out successfully.');
+    navigate('/login', { replace: true, state: null });
+  }, [isLogoutRedirect, navigate]);
+
+  useEffect(() => {
+    if (!logoutMessage) return undefined;
+
+    const timer = window.setTimeout(() => {
+      setLogoutMessage('');
+    }, 4000);
+
+    return () => window.clearTimeout(timer);
+  }, [logoutMessage]);
+
+  if (isAuthenticated && !isLogoutRedirect && !logoutMessage) {
     return <Navigate to={redirectTo} replace />;
   }
 
@@ -25,6 +43,12 @@ export default function Login() {
       title="Welcome back"
       description="Login with your campus account to manage bookings and profile details."
     >
+      {logoutMessage && (
+        <div className="mb-6 max-w-lg rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-900 shadow-sm">
+          {logoutMessage}
+        </div>
+      )}
+
       <form
         className="max-w-lg rounded-md border border-slate-200 bg-white p-6 shadow-sm"
         onSubmit={async (event) => {
@@ -56,11 +80,6 @@ export default function Login() {
         {error && (
           <div className="mt-5">
             <Notice tone="warning">{error}</Notice>
-          </div>
-        )}
-        {successMessage && !error && (
-          <div className="mt-5">
-            <Notice>{successMessage}</Notice>
           </div>
         )}
         <p className="mt-6 text-center text-sm text-slate-600">
