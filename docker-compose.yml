@@ -16,6 +16,100 @@ services:
       timeout: 5s
       retries: 5
 
+  user-service:
+    image: campus-user-service
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 4001
+      DATABASE_URL: postgresql://campus_user:campus_password@postgres:5432/campus_events
+      FRONTEND_ORIGIN: http://localhost:8080
+    ports:
+      - "4001:4001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4001/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  event-service:
+    image: campus-event-service
+    build:
+      context: .
+      dockerfile: services/event-service/Dockerfile
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 4002
+      DATABASE_URL: postgresql://campus_user:campus_password@postgres:5432/campus_events
+      FRONTEND_ORIGIN: http://localhost:8080
+      AZURE_STORAGE_CONTAINER_NAME: ${AZURE_STORAGE_CONTAINER_NAME:-event-images}
+      MAX_IMAGE_UPLOAD_BYTES: ${MAX_IMAGE_UPLOAD_BYTES:-5242880}
+    ports:
+      - "4002:4002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4002/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  booking-service:
+    image: campus-booking-service
+    build:
+      context: .
+      dockerfile: services/booking-service/Dockerfile
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 4003
+      DATABASE_URL: postgresql://campus_user:campus_password@postgres:5432/campus_events
+      FRONTEND_ORIGIN: http://localhost:8080
+      USER_SERVICE_URL: http://user-service:4001
+      EVENT_SERVICE_URL: http://event-service:4002
+    ports:
+      - "4003:4003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4003/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  frontend:
+    image: campus-frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_USER_SERVICE_URL: http://localhost:4001
+        VITE_EVENT_SERVICE_URL: http://localhost:4002
+        VITE_BOOKING_SERVICE_URL: http://localhost:4003
+    ports:
+      - "8080:80"
+    depends_on:
+      user-service:
+        condition: service_healthy
+      event-service:
+        condition: service_healthy
+      booking-service:
+        condition: service_healthy
+
 volumes:
   postgres-data:
-

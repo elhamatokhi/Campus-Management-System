@@ -1,49 +1,50 @@
-# Docker
+# Docker And Compose
 
-Docker packages an application with its runtime dependencies into an image. A container is a running instance of that image.
+Docker packages an application and its runtime dependencies into an image. A container is a running instance of an image. Docker Compose runs several containers together on one local network.
 
-This project builds one image for each deployable application component:
+This project has five local Compose services:
 
-- `campus-frontend`: nginx serving the production React/Vite build
-- `campus-user-service`: Express User Service on port `4001`
-- `campus-event-service`: Express Event Service on port `4002`
-- `campus-booking-service`: Express Booking Service on port `4003`
+- `postgres`: PostgreSQL database
+- `user-service`: Express User Service on port `4001`
+- `event-service`: Express Event Service on port `4002`
+- `booking-service`: Express Booking Service on port `4003`
+- `frontend`: nginx serving the production React/Vite build on port `8080`
 
-PostgreSQL remains available through the existing local `docker-compose.yml`.
+## Images
 
-## Build Images
+Application image names:
 
-Run from the repository root:
+```text
+campus-frontend
+campus-user-service
+campus-event-service
+campus-booking-service
+```
+
+Build all application images:
 
 ```bash
 npm run docker:build
 ```
 
-Or build one image:
+Compose can also build them:
 
 ```bash
-npm run docker:build:frontend
-npm run docker:build:user-service
-npm run docker:build:event-service
-npm run docker:build:booking-service
+docker compose build
 ```
 
-The Docker build context is the repository root so backend images can include the shared Prisma schema and generated Prisma Client.
+## Environment
 
-## Runtime Environment
+Local development uses the root `.env` file. Do not commit real secrets.
 
-Do not bake secrets into images. Pass runtime configuration with `--env-file .env` or individual `-e` flags.
-
-Backend containers require:
+Backend containers receive runtime configuration from `.env`, with Compose overrides for container networking:
 
 ```text
-DATABASE_URL
-JWT_SECRET
-JWT_EXPIRES_IN
-FRONTEND_ORIGIN
+DATABASE_URL=postgresql://campus_user:campus_password@postgres:5432/campus_events
+FRONTEND_ORIGIN=http://localhost:8080
 ```
 
-Event Service also requires these for image upload:
+The Event Service also receives Azure Blob Storage configuration at runtime:
 
 ```text
 AZURE_STORAGE_CONNECTION_STRING
@@ -51,59 +52,59 @@ AZURE_STORAGE_CONTAINER_NAME
 MAX_IMAGE_UPLOAD_BYTES
 ```
 
-Booking Service also uses:
+Secrets are not baked into images. `.dockerignore` excludes `.env` files, `node_modules`, git metadata, and local build outputs.
+
+## Service Networking
+
+Inside Docker Compose, services communicate by service name:
 
 ```text
-USER_SERVICE_URL
-EVENT_SERVICE_URL
+postgres:5432
+user-service:4001
+event-service:4002
+booking-service:4003
 ```
 
-For containers running on Docker Desktop and connecting to PostgreSQL published on the host, use a container-friendly database URL such as:
+Do not use `localhost` for container-to-container traffic. Inside a container, `localhost` means that same container.
+
+The production frontend is different because API calls are made by the user's browser, not by the nginx container. Browser-facing API URLs must use host ports:
 
 ```text
-DATABASE_URL=postgresql://campus_user:campus_password@host.docker.internal:5432/campus_events
+http://localhost:4001
+http://localhost:4002
+http://localhost:4003
 ```
 
-## Run Containers Locally
+Vite injects these values at build time. The Compose frontend build passes them as Docker build args.
 
-Start PostgreSQL first:
+## Database Migrations
+
+Application containers do not run migrations on startup. Run Prisma migrations deliberately from the host:
 
 ```bash
 docker compose up -d postgres
-```
-
-Run database migrations from the host. Application containers do not run destructive migrations on startup:
-
-```bash
 npm run db:migrate
+npm run db:seed
 ```
 
-Run the backend containers:
+For a reset of local development data:
 
 ```bash
-docker run --rm --name campus-user-service \
-  --env-file .env \
-  -e DATABASE_URL=postgresql://campus_user:campus_password@host.docker.internal:5432/campus_events \
-  -p 4001:4001 \
-  campus-user-service
-
-docker run --rm --name campus-event-service \
-  --env-file .env \
-  -e DATABASE_URL=postgresql://campus_user:campus_password@host.docker.internal:5432/campus_events \
-  -p 4002:4002 \
-  campus-event-service
-
-docker run --rm --name campus-booking-service \
-  --env-file .env \
-  -e DATABASE_URL=postgresql://campus_user:campus_password@host.docker.internal:5432/campus_events \
-  -p 4003:4003 \
-  campus-booking-service
+npm run db:reset
 ```
 
-Run the frontend container:
+## Run Full Stack
+
+Build and start everything:
 
 ```bash
-docker run --rm --name campus-frontend -p 8080:80 campus-frontend
+docker compose up --build
+```
+
+Run in the background:
+
+```bash
+docker compose up -d --build
 ```
 
 Open:
@@ -112,7 +113,39 @@ Open:
 http://localhost:8080
 ```
 
-## Health Checks
+Stop containers:
+
+```bash
+docker compose down
+```
+
+Stop containers and remove the local PostgreSQL volume:
+
+```bash
+docker compose down -v
+```
+
+## Inspect
+
+Check status:
+
+```bash
+docker compose ps
+```
+
+Read all logs:
+
+```bash
+docker compose logs
+```
+
+Read one service log:
+
+```bash
+docker compose logs event-service
+```
+
+Health endpoints:
 
 ```bash
 curl http://localhost:4001/health
@@ -121,8 +154,13 @@ curl http://localhost:4003/health
 curl http://localhost:8080
 ```
 
-## Security Notes
+## Non-Docker Development
 
-- `.dockerignore` excludes `.env`, `node_modules`, git metadata, and local build outputs.
-- Secrets must be passed at container runtime.
-- Prisma Client is generated during image build, but migrations are run manually from the host or a controlled release job.
+The original local workflow still works:
+
+```bash
+npm run dev:user-service
+npm run dev:event-service
+npm run dev:booking-service
+npm run dev:frontend
+```

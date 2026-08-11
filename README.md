@@ -42,9 +42,9 @@ The backend will be split into three services:
 
 ## Current Phase
 
-Phase 2: frontend shell.
+Phase 11: local Docker Compose stack.
 
-The React + Vite frontend is set up with Tailwind CSS, React Router, reusable UI components, and mock event data. Backend services are not implemented yet.
+The React frontend, three backend services, PostgreSQL database, Prisma persistence, JWT authorization, and Azure Blob Storage image upload are implemented. Docker Compose can run the full local stack.
 
 ## Local Development
 
@@ -85,6 +85,45 @@ Open:
 
 ```text
 http://localhost:5173
+```
+
+## Docker Compose
+
+Docker Compose runs the local container stack:
+
+- PostgreSQL
+- User Service
+- Event Service
+- Booking Service
+- frontend nginx container
+
+Prepare the database first:
+
+```bash
+docker compose up -d postgres
+npm run db:migrate
+npm run db:seed
+```
+
+Then start the full stack:
+
+```bash
+docker compose up --build
+```
+
+Open:
+
+```text
+http://localhost:8080
+```
+
+Useful commands:
+
+```bash
+docker compose ps
+docker compose logs
+docker compose logs event-service
+docker compose down
 ```
 
 Development users after seeding:
