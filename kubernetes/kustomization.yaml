@@ -1,0 +1,11 @@
+resources:
+  - configmap.yaml
+  - frontend-nginx-configmap.yaml
+  - user-deployment.yaml
+  - user-service.yaml
+  - event-deployment.yaml
+  - event-service.yaml
+  - booking-deployment.yaml
+  - booking-service.yaml
+  - frontend-deployment.yaml
+  - frontend-service.yaml

@@ -1,7 +1,7 @@
 const serviceUrls = {
-  user: import.meta.env.VITE_USER_SERVICE_URL || 'http://localhost:4001',
-  event: import.meta.env.VITE_EVENT_SERVICE_URL || 'http://localhost:4002',
-  booking: import.meta.env.VITE_BOOKING_SERVICE_URL || 'http://localhost:4003',
+  user: import.meta.env.VITE_USER_SERVICE_URL ?? 'http://localhost:4001',
+  event: import.meta.env.VITE_EVENT_SERVICE_URL ?? 'http://localhost:4002',
+  booking: import.meta.env.VITE_BOOKING_SERVICE_URL ?? 'http://localhost:4003',
 };
 
 export class ApiError extends Error {

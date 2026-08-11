@@ -42,9 +42,9 @@ The backend will be split into three services:
 
 ## Current Phase
 
-Azure Container Registry preparation.
+Kubernetes / AKS preparation.
 
-The React frontend, three backend services, local PostgreSQL, Prisma persistence, JWT authorization, Azure Blob Storage image upload, Docker images, and Docker Compose stack are implemented. The project is prepared for manually pushing images to Azure Container Registry.
+The React frontend, three backend services, local PostgreSQL, Prisma persistence, JWT authorization, Azure Blob Storage image upload, Docker images, Docker Compose stack, and ACR image workflow are implemented. The project now includes Kubernetes manifests for a later manual AKS deployment.
 
 ## Local Development
 

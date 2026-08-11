@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: campus-config
+data:
+  NODE_ENV: "production"
+  JWT_EXPIRES_IN: "1d"
+  FRONTEND_ORIGIN: "http://localhost:8080"
+  USER_SERVICE_URL: "http://user-service:4001"
+  EVENT_SERVICE_URL: "http://event-service:4002"
+  AZURE_STORAGE_CONTAINER_NAME: "event-images"
+  MAX_IMAGE_UPLOAD_BYTES: "5242880"
