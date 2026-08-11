@@ -26,7 +26,10 @@
     "lint": "npm run lint -w frontend && npm run lint -w services/user-service && npm run lint -w services/event-service && npm run lint -w services/booking-service",
     "test": "npm run test -w frontend && npm run test -w services/user-service && npm run test -w services/event-service && npm run test -w services/booking-service",
     "db:generate": "prisma generate",
+    "db:validate": "prisma validate",
     "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:status": "prisma migrate status",
     "db:seed": "prisma db seed",
     "db:reset": "prisma migrate reset"
   },

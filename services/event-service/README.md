@@ -91,7 +91,7 @@ Available variables:
 - `PORT`: service port, default `4002`
 - `NODE_ENV`: runtime environment
 - `FRONTEND_ORIGIN`: allowed frontend origin for CORS
-- `DATABASE_URL`: future PostgreSQL connection string
+- `DATABASE_URL`: PostgreSQL connection string
 - `AZURE_STORAGE_CONNECTION_STRING`: Azure Blob Storage connection string
 - `AZURE_STORAGE_CONTAINER_NAME`: Blob Storage container name for event images
 - `MAX_IMAGE_UPLOAD_BYTES`: image upload size limit, default `5242880`

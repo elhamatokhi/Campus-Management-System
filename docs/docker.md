@@ -44,6 +44,8 @@ DATABASE_URL=postgresql://campus_user:campus_password@postgres:5432/campus_event
 FRONTEND_ORIGIN=http://localhost:8080
 ```
 
+For Azure deployment later, use the same backend images and supply an Azure PostgreSQL `DATABASE_URL` at runtime instead of the Compose-local `postgres` URL.
+
 The Event Service also receives Azure Blob Storage configuration at runtime:
 
 ```text

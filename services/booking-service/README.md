@@ -102,7 +102,7 @@ Available variables:
 - `PORT`: service port, default `4003`
 - `NODE_ENV`: runtime environment
 - `FRONTEND_ORIGIN`: allowed frontend origin for CORS
-- `DATABASE_URL`: future PostgreSQL connection string
+- `DATABASE_URL`: PostgreSQL connection string
 - `USER_SERVICE_URL`: future User Service base URL
 - `EVENT_SERVICE_URL`: future Event Service base URL
 - `BOOKING_NOTIFICATION_FUNCTION_URL`: future Azure Function URL for booking notifications
