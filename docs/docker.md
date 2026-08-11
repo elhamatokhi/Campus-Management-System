@@ -33,6 +33,26 @@ Compose can also build them:
 docker compose build
 ```
 
+## Azure Container Registry
+
+For Azure deployment preparation, tag these same images with an ACR login server and push them:
+
+```text
+<registry>.azurecr.io/campus-frontend:latest
+<registry>.azurecr.io/campus-user-service:latest
+<registry>.azurecr.io/campus-event-service:latest
+<registry>.azurecr.io/campus-booking-service:latest
+```
+
+Use Azure CLI authentication:
+
+```bash
+az login
+az acr login --name <registry-name>
+```
+
+The complete tag, push, and verification workflow is documented in [Azure Container Registry](azure-container-registry.md).
+
 ## Environment
 
 Local development uses the root `.env` file. Do not commit real secrets.

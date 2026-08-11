@@ -42,9 +42,9 @@ The backend will be split into three services:
 
 ## Current Phase
 
-Azure PostgreSQL preparation.
+Azure Container Registry preparation.
 
-The React frontend, three backend services, local PostgreSQL, Prisma persistence, JWT authorization, Azure Blob Storage image upload, Docker images, and Docker Compose stack are implemented. The project is prepared to connect either to local Docker PostgreSQL or Azure Database for PostgreSQL Flexible Server through `DATABASE_URL`.
+The React frontend, three backend services, local PostgreSQL, Prisma persistence, JWT authorization, Azure Blob Storage image upload, Docker images, and Docker Compose stack are implemented. The project is prepared for manually pushing images to Azure Container Registry.
 
 ## Local Development
 
@@ -154,6 +154,7 @@ Additional project notes are in the `docs/` directory:
 - [Database Setup](docs/database.md)
 - [Azure PostgreSQL](docs/azure-postgresql.md)
 - [Azure Blob Storage](docs/azure-storage.md)
+- [Azure Container Registry](docs/azure-container-registry.md)
 - [Docker Plan](docs/docker.md)
 - [Kubernetes Plan](docs/kubernetes.md)
 - [Azure Deployment Plan](docs/azure-deployment.md)
