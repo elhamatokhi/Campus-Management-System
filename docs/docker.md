@@ -53,6 +53,27 @@ az acr login --name <registry-name>
 
 The complete tag, push, and verification workflow is documented in [Azure Container Registry](azure-container-registry.md).
 
+## Azure Container Apps Frontend Image
+
+The local Compose frontend image is built with browser-facing localhost API URLs. Azure Container Apps uses internal service names instead, so the frontend needs a deployment-specific image build:
+
+```bash
+docker build \
+  -f infra/container-apps/frontend.Dockerfile \
+  -t campusmngmntacr-hedvhmc7e6ccdret.azurecr.io/campus-frontend:latest \
+  .
+```
+
+That image builds Vite with same-origin API paths and uses nginx to proxy:
+
+```text
+/api/users -> http://campus-user-service
+/api/events -> http://campus-event-service
+/api/bookings -> http://campus-booking-service
+```
+
+The backend images do not need this rebuild.
+
 ## Environment
 
 Local development uses the root `.env` file. Do not commit real secrets.
