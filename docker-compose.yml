@@ -3,15 +3,15 @@ services:
     image: postgres:16-alpine
     container_name: campus-events-postgres
     environment:
-      POSTGRES_USER: campus_user
-      POSTGRES_PASSWORD: campus_password
-      POSTGRES_DB: campus_events
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
     ports:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U campus_user -d campus_events"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:?POSTGRES_USER is required} -d ${POSTGRES_DB:?POSTGRES_DB is required}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,7 +26,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 4001
-      DATABASE_URL: postgresql://campus_user:campus_password@postgres:5432/campus_events
+      DATABASE_URL: postgresql://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:?POSTGRES_DB is required}
       FRONTEND_ORIGIN: http://localhost:8080
     ports:
       - "4001:4001"
@@ -50,7 +50,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 4002
-      DATABASE_URL: postgresql://campus_user:campus_password@postgres:5432/campus_events
+      DATABASE_URL: postgresql://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:?POSTGRES_DB is required}
       FRONTEND_ORIGIN: http://localhost:8080
       AZURE_STORAGE_CONTAINER_NAME: ${AZURE_STORAGE_CONTAINER_NAME:-event-images}
       MAX_IMAGE_UPLOAD_BYTES: ${MAX_IMAGE_UPLOAD_BYTES:-5242880}
@@ -76,7 +76,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 4003
-      DATABASE_URL: postgresql://campus_user:campus_password@postgres:5432/campus_events
+      DATABASE_URL: postgresql://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:?POSTGRES_DB is required}
       FRONTEND_ORIGIN: http://localhost:8080
       USER_SERVICE_URL: http://user-service:4001
       EVENT_SERVICE_URL: http://event-service:4002
