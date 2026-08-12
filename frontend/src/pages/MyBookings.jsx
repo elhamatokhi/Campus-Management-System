@@ -45,7 +45,7 @@ export default function MyBookings() {
     <PageShell
       eyebrow="My Bookings"
       title="Your upcoming reservations"
-      description="Bookings loaded from the Booking Service for your authenticated account."
+      description="View and manage reservations for your account."
     >
       <div className="mb-6 flex flex-wrap gap-3">
         <Link to="/events">

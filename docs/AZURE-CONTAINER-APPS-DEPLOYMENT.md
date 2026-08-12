@@ -38,7 +38,7 @@ The deployment script creates these Container Apps resources when you run it:
 
 The script grants the managed identity `AcrPull` on the existing ACR. It does not use registry passwords and does not require the ACR admin user.
 
-## Why The Frontend Image Must Be Rebuilt
+## Image Build And Push
 
 Vite reads `VITE_*` API URLs at build time. The existing local Docker Compose frontend image is built for browser calls to:
 
@@ -66,7 +66,21 @@ http://campus-event-service
 http://campus-booking-service
 ```
 
-Only the frontend image needs this deployment-specific rebuild. The backend images can be reused from ACR.
+Build and push Azure Container Apps-compatible images separately from deployment:
+
+```bash
+./scripts/build-push-aca-images.sh user
+./scripts/build-push-aca-images.sh event
+./scripts/build-push-aca-images.sh booking
+./scripts/build-push-aca-images.sh frontend
+./scripts/build-push-aca-images.sh all
+```
+
+The build script uses `docker buildx build --platform linux/amd64 --provenance=false --push`. Set `IMAGE_TAG` when you want a unique deployment tag:
+
+```bash
+IMAGE_TAG=frontend-fix-1 ./scripts/build-push-aca-images.sh frontend
+```
 
 ## Required Local Tools
 
@@ -122,7 +136,11 @@ export MAX_REPLICAS=3
 Run from the repository root:
 
 ```bash
-./scripts/deploy-container-apps.sh
+./scripts/deploy-container-apps.sh user
+./scripts/deploy-container-apps.sh event
+./scripts/deploy-container-apps.sh booking
+./scripts/deploy-container-apps.sh frontend
+./scripts/deploy-container-apps.sh all
 ```
 
 The script stages are:
@@ -132,14 +150,11 @@ The script stages are:
 3. Create or verify the Container Apps environment.
 4. Create or verify a user-assigned managed identity.
 5. Grant `AcrPull` on ACR to that identity.
-6. Rebuild and push the frontend image for Container Apps.
-7. Deploy internal User Service.
-8. Deploy internal Event Service.
-9. Deploy internal Booking Service.
-10. Deploy external frontend.
-11. Update backend CORS origins to the final frontend URL.
+6. Use the requested images already present in ACR.
+7. Create or update the selected Container App target.
+8. Update backend CORS origins to the final frontend URL when the frontend app exists.
 
-The script is intended for the first Container Apps deployment. It will stop if any of the four Container Apps already exist, so it does not accidentally replace an existing deployment. Use explicit `az containerapp update` commands for later revisions.
+The script is idempotent for normal reruns. It reuses the Container Apps environment, managed identity, and ACR role assignment when they already exist. For each expected Container App, it creates the app if missing and updates image, registry identity, secrets, environment variables, ingress, and replica settings if the app already exists.
 
 ## Health Checks
 

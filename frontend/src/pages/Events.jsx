@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getEvents } from '../api/eventApi.js';
 import EventCard from '../components/EventCard.jsx';
-import ErrorState from '../components/ErrorState.jsx';
 import LoadingState from '../components/LoadingState.jsx';
+import Notice from '../components/Notice.jsx';
 import PageShell from '../components/PageShell.jsx';
 import { eventCategories } from '../utils/eventFormat.js';
 
@@ -16,7 +16,10 @@ export default function Events() {
   useEffect(() => {
     getEvents()
       .then((response) => setEvents(response.data))
-      .catch((apiError) => setError(apiError.message))
+      .catch((apiError) => {
+        console.error('Events request failed:', apiError);
+        setError('Events are temporarily unavailable. Please try again in a moment.');
+      })
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -40,7 +43,7 @@ export default function Events() {
     <PageShell
       eyebrow="Events"
       title="Find your next campus activity"
-      description="Search and filter events loaded from the Event Service."
+      description="Search and filter academic, career, cultural, wellbeing, and sports activities."
     >
       <div className="mb-8 grid gap-4 rounded-md border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[1fr_220px]">
         <label>
@@ -74,7 +77,11 @@ export default function Events() {
       </div>
 
       {isLoading && <LoadingState message="Loading events..." />}
-      {!isLoading && error && <ErrorState title="Could not load events" message={error} />}
+      {!isLoading && error && (
+        <div className="rounded-md border border-slate-200 bg-white p-6 shadow-sm">
+          <Notice>{error}</Notice>
+        </div>
+      )}
 
       {!isLoading && !error && filteredEvents.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -86,7 +93,9 @@ export default function Events() {
       {!isLoading && !error && filteredEvents.length === 0 && (
         <div className="rounded-md border border-slate-200 bg-white p-8 text-center">
           <h2 className="text-xl font-bold text-campus-navy">No events found</h2>
-          <p className="mt-2 text-sm text-slate-600">Try a different search term or category.</p>
+          <p className="mt-2 text-sm text-slate-600">
+            Try changing your search or category filters, or check back later.
+          </p>
         </div>
       )}
     </PageShell>

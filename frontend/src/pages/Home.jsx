@@ -5,7 +5,6 @@ import campusHero from '../assets/campus-hero.png';
 import Button from '../components/Button.jsx';
 import EventCard from '../components/EventCard.jsx';
 import PageShell from '../components/PageShell.jsx';
-import Notice from '../components/Notice.jsx';
 import { availablePlaces } from '../utils/eventFormat.js';
 
 export default function Home() {
@@ -59,8 +58,7 @@ export default function Home() {
 
       <section className="border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-          <Notice>Live data: these numbers are derived from the Event Service.</Notice>
-          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-3">
             {stats.map((stat) => (
               <div key={stat.label} className="rounded-md border border-slate-200 p-5">
                 <p className="text-3xl font-bold text-campus-navy">{stat.value}</p>
@@ -74,7 +72,7 @@ export default function Home() {
       <PageShell
         eyebrow="Featured"
         title="Popular upcoming events"
-        description="Upcoming events loaded from the Event Service."
+        description="Explore upcoming activities and opportunities across campus."
       >
         {events.length > 0 ? <div className="grid gap-6 md:grid-cols-3">
           {events.slice(0, 3).map((event) => (
@@ -82,7 +80,8 @@ export default function Home() {
           ))}
         </div> : (
           <div className="rounded-md border border-slate-200 bg-white p-6 text-sm text-slate-600">
-            Start the Event Service to show featured events.
+            <h2 className="text-base font-semibold text-campus-navy">No upcoming events yet.</h2>
+            <p className="mt-2">New campus activities will appear here when they are added.</p>
           </div>
         )}
       </PageShell>

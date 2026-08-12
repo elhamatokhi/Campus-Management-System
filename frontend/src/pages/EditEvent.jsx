@@ -90,7 +90,7 @@ export default function EditEvent() {
     <PageShell
       eyebrow="Admin"
       title={`Edit ${event.title}`}
-      description="Edit event details through the Event Service."
+      description="Edit event details."
     >
       <div className="mb-6">
         <Link to="/admin">
@@ -109,7 +109,7 @@ export default function EditEvent() {
       <div className="mt-6 max-w-3xl rounded-md border border-red-200 bg-red-50 p-5">
         <h2 className="font-semibold text-red-900">Delete event</h2>
         <p className="mt-2 text-sm text-red-700">
-          Events with existing booking records may be blocked by the backend to preserve booking history.
+          Events with existing bookings may be blocked to preserve booking history.
         </p>
         <Button variant="danger" className="mt-4" onClick={handleDelete}>
           Delete event

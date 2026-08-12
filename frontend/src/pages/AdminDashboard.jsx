@@ -70,7 +70,7 @@ export default function AdminDashboard() {
     <PageShell
       eyebrow="Admin"
       title="Admin dashboard"
-      description="A management overview using live Event Service and Booking Service data."
+      description="A management overview for events, bookings, and capacity."
     >
       <div className="mb-6 flex flex-wrap gap-3">
         <Link to="/">
@@ -82,7 +82,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="mb-8">
-        <Notice>Live admin data from Event Service and Booking Service.</Notice>
+        <Notice>Current admin overview for campus events and bookings.</Notice>
       </div>
 
       {isLoading && <LoadingState message="Loading dashboard..." />}

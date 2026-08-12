@@ -41,7 +41,7 @@ export default function CreateEvent() {
     <PageShell
       eyebrow="Admin"
       title="Create event"
-      description="Create an event through the Event Service."
+      description="Create a new campus event."
     >
       <div className="mb-6">
         <Link to="/admin">

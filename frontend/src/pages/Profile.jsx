@@ -28,7 +28,7 @@ export default function Profile() {
     <PageShell
       eyebrow="Profile"
       title="Manage your student profile"
-      description="Update your account details from the User Service."
+      description="Update your account details."
     >
       <div className="mb-6">
         <Link to="/">
