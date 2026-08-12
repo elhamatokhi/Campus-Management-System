@@ -19,13 +19,13 @@ DATABASE_URL
 Local development:
 
 ```text
-DATABASE_URL=postgresql://campus_user:campus_password@localhost:5432/campus_events
+DATABASE_URL=postgresql://<postgres_user>:<url_encoded_postgres_password>@localhost:5432/<postgres_db>
 ```
 
 Docker Compose internal networking:
 
 ```text
-DATABASE_URL=postgresql://campus_user:campus_password@postgres:5432/campus_events
+LOCAL_DATABASE_URL=postgresql://<postgres_user>:<url_encoded_postgres_password>@postgres:5432/<postgres_db>
 ```
 
 Azure PostgreSQL:

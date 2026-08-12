@@ -81,9 +81,12 @@ Local development uses the root `.env` file. Do not commit real secrets.
 Backend containers receive runtime configuration from `.env`, with Compose overrides for container networking:
 
 ```text
-DATABASE_URL=postgresql://campus_user:campus_password@postgres:5432/campus_events
+LOCAL_DATABASE_URL=postgresql://<postgres_user>:<url_encoded_postgres_password>@postgres:5432/<postgres_db>
+DATABASE_URL=${LOCAL_DATABASE_URL}
 FRONTEND_ORIGIN=http://localhost:8080
 ```
+
+Use the raw local password in `POSTGRES_PASSWORD`, and URL-encode that password in `LOCAL_DATABASE_URL` if it contains reserved URL characters.
 
 For Azure deployment later, use the same backend images and supply an Azure PostgreSQL `DATABASE_URL` at runtime instead of the Compose-local `postgres` URL.
 

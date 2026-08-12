@@ -14,16 +14,19 @@ Local defaults:
 
 ```text
 POSTGRES_USER=campus_user
-POSTGRES_PASSWORD=campus_password
+POSTGRES_PASSWORD=<local_postgres_password>
 POSTGRES_DB=campus_events
-DATABASE_URL=postgresql://campus_user:campus_password@localhost:5432/campus_events
+DATABASE_URL=postgresql://<postgres_user>:<url_encoded_postgres_password>@localhost:5432/<postgres_db>
+LOCAL_DATABASE_URL=postgresql://<postgres_user>:<url_encoded_postgres_password>@postgres:5432/<postgres_db>
 ```
 
-When backend services run inside Docker Compose, Compose overrides `DATABASE_URL` to use the internal service name:
+When backend services run inside Docker Compose, Compose sets `DATABASE_URL` from `LOCAL_DATABASE_URL` so the internal service name is used:
 
 ```text
-DATABASE_URL=postgresql://campus_user:campus_password@postgres:5432/campus_events
+DATABASE_URL=${LOCAL_DATABASE_URL}
 ```
+
+If the local PostgreSQL password contains reserved URL characters such as `/`, `@`, `:`, `%`, or `#`, percent-encode it in `DATABASE_URL` and `LOCAL_DATABASE_URL`. Keep `POSTGRES_PASSWORD` as the raw password because PostgreSQL itself receives that value.
 
 ## Cloud Database
 
