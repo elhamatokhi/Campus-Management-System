@@ -10,6 +10,7 @@ coverage/
 .env
 .env.local
 .env.*.local
+local.settings.json
 
 # Logs
 *.log
@@ -22,6 +23,10 @@ npm-debug.log*
 
 # Docker and local data
 postgres-data/
+azure-function/AzuriteConfig
+azure-function/__azurite_db_*.json
+azure-function/__blobstorage__/
+azure-function/__queuestorage__/
 
 # Kubernetes local secrets
 kubernetes/secret.yaml

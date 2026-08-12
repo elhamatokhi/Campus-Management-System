@@ -1,0 +1,23 @@
+{
+  "name": "azure-function",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/functions/*.js",
+  "scripts": {
+    "start": "func start",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.10.0",
+    "@azure/storage-queue": "^12.31.0"
+  },
+  "devDependencies": {
+    "azurite": "^3.36.0",
+    "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,8 @@
+*.js.map
+*.ts
+.git*
+.vscode
+coverage
+local.settings.json
+node_modules
+src/**/*.test.js
