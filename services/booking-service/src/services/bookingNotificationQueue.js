@@ -1,5 +1,21 @@
-import { QueueClient } from '@azure/storage-queue';
+import { QueueServiceClient } from '@azure/storage-queue';
 import { env } from '../config/env.js';
+
+const defaultDependencies = {
+  createQueueClient: (connectionString, queueName) => (
+    QueueServiceClient.fromConnectionString(connectionString).getQueueClient(queueName)
+  ),
+};
+
+let dependencies = { ...defaultDependencies };
+
+export function configureBookingNotificationQueueDependencies(overrides = {}) {
+  dependencies = { ...dependencies, ...overrides };
+}
+
+export function resetBookingNotificationQueueDependencies() {
+  dependencies = { ...defaultDependencies };
+}
 
 export function createBookingNotificationPayload(booking) {
   return {
@@ -20,7 +36,7 @@ export async function publishBookingCreatedNotification(booking, logger = consol
   }
 
   const payload = createBookingNotificationPayload(booking);
-  const queueClient = QueueClient.fromConnectionString(
+  const queueClient = dependencies.createQueueClient(
     env.bookingNotificationStorageConnectionString,
     env.bookingNotificationQueue,
   );

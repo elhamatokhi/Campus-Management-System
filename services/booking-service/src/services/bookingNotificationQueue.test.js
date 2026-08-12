@@ -2,8 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { env } from '../config/env.js';
 import {
+  configureBookingNotificationQueueDependencies,
   createBookingNotificationPayload,
   publishBookingCreatedNotification,
+  resetBookingNotificationQueueDependencies,
 } from './bookingNotificationQueue.js';
 
 const booking = {
@@ -56,4 +58,42 @@ test('missing queue configuration skips notification publishing safely', async (
 
   assert.deepEqual(result, { skipped: true });
   assert.equal(messages[0], 'Booking notification queue is not configured; skipping notification publish.');
+});
+
+test('configured queue publishes expected JSON payload', async () => {
+  const originalConnectionString = env.bookingNotificationStorageConnectionString;
+  const originalQueue = env.bookingNotificationQueue;
+  const sentMessages = [];
+  const logs = [];
+
+  env.bookingNotificationStorageConnectionString = 'UseDevelopmentStorage=true';
+  env.bookingNotificationQueue = 'booking-notifications';
+
+  configureBookingNotificationQueueDependencies({
+    createQueueClient: (connectionString, queueName) => {
+      assert.equal(connectionString, 'UseDevelopmentStorage=true');
+      assert.equal(queueName, 'booking-notifications');
+
+      return {
+        sendMessage: async (message) => sentMessages.push(message),
+      };
+    },
+  });
+
+  const result = await publishBookingCreatedNotification(booking, {
+    info: (message, details) => logs.push({ message, details }),
+  });
+
+  resetBookingNotificationQueueDependencies();
+  env.bookingNotificationStorageConnectionString = originalConnectionString;
+  env.bookingNotificationQueue = originalQueue;
+
+  assert.deepEqual(result, { skipped: false });
+  assert.equal(sentMessages.length, 1);
+  assert.deepEqual(JSON.parse(sentMessages[0]), createBookingNotificationPayload(booking));
+  assert.equal(logs[0].message, 'Booking notification queued');
+  assert.deepEqual(logs[0].details, {
+    bookingId: 'booking-1',
+    eventId: 'event-1',
+  });
 });
