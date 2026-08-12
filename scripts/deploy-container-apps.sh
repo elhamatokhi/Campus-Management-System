@@ -22,20 +22,31 @@ case "$target" in
     ;;
 esac
 
-required_vars=(
-  RESOURCE_GROUP
-  LOCATION
-  DATABASE_URL
-  JWT_SECRET
-  AZURE_STORAGE_CONNECTION_STRING
-)
+require_vars() {
+  local var_name
 
-for var_name in "${required_vars[@]}"; do
-  if [[ -z "${!var_name:-}" ]]; then
-    echo "Missing required environment variable: ${var_name}" >&2
-    exit 1
-  fi
-done
+  for var_name in "$@"; do
+    if [[ -z "${!var_name:-}" ]]; then
+      echo "Missing required environment variable: ${var_name}" >&2
+      exit 1
+    fi
+  done
+}
+
+required_vars=(RESOURCE_GROUP LOCATION)
+
+case "$target" in
+  user|booking)
+    required_vars+=(DATABASE_URL JWT_SECRET)
+    ;;
+  event|all)
+    required_vars+=(DATABASE_URL JWT_SECRET AZURE_STORAGE_CONNECTION_STRING)
+    ;;
+  frontend)
+    ;;
+esac
+
+require_vars "${required_vars[@]}"
 
 ACR_NAME="${ACR_NAME:-campusmngmntacr}"
 ACR_LOGIN_SERVER="${ACR_LOGIN_SERVER:-}"
