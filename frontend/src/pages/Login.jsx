@@ -9,11 +9,11 @@ import { useAuth } from '../context/AuthContext.jsx';
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, login, user } = useAuth();
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoutMessage, setLogoutMessage] = useState('');
-  const redirectTo = location.state?.from?.pathname || '/events';
+  const requestedPath = location.state?.from?.pathname;
   const isLogoutRedirect = location.state?.loggedOut === true;
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export default function Login() {
   }, [logoutMessage]);
 
   if (isAuthenticated && !isLogoutRedirect && !logoutMessage) {
-    return <Navigate to={redirectTo} replace />;
+    return <Navigate to={requestedPath || (user?.role === 'ADMIN' ? '/' : '/events')} replace />;
   }
 
   return (
@@ -58,11 +58,11 @@ export default function Login() {
 
           const formData = new FormData(event.currentTarget);
           try {
-            await login({
+            const authData = await login({
               email: formData.get('email'),
               password: formData.get('password'),
             });
-            navigate(redirectTo, { replace: true });
+            navigate(requestedPath || (authData.user?.role === 'ADMIN' ? '/' : '/events'), { replace: true });
           } catch (apiError) {
             setError(apiError.message);
           } finally {

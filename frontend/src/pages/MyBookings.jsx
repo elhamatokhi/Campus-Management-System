@@ -41,6 +41,54 @@ export default function MyBookings() {
     }
   };
 
+  const activeBookings = bookings.filter((booking) => booking.status === 'CONFIRMED');
+  const cancelledBookings = bookings.filter((booking) => booking.status === 'CANCELLED');
+
+  const renderBookingCard = (booking, { isCancelled = false } = {}) => (
+    <article
+      key={booking.id}
+      className={`grid gap-4 rounded-md border p-5 shadow-sm md:grid-cols-[120px_1fr_auto] md:items-center ${
+        isCancelled
+          ? 'border-slate-200 bg-slate-50 text-slate-700'
+          : 'border-slate-200 bg-white'
+      }`}
+    >
+      <img
+        className={`h-24 w-full rounded-md object-cover md:w-28 ${isCancelled ? 'opacity-75 grayscale' : ''}`}
+        src={eventImageUrl(booking.event.imageUrl)}
+        alt=""
+      />
+      <div>
+        <p className={`text-xs font-semibold uppercase tracking-wide ${
+          isCancelled ? 'text-slate-500' : 'text-campus-teal'
+        }`}
+        >
+          {booking.status}
+        </p>
+        <h2 className="mt-1 text-xl font-bold text-campus-navy">{booking.event.title}</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          {formatEventDate(booking.event.startDate)} at {formatEventTime(booking.event.startDate)} - {booking.event.location}
+        </p>
+      </div>
+      <div className="flex gap-2 md:flex-col">
+        <Link to={`/events/${booking.event.id}`}>
+          <Button variant="secondary" className="w-full">
+            View
+          </Button>
+        </Link>
+        {isCancelled ? (
+          <Link to={`/events/${booking.event.id}`}>
+            <Button className="w-full">Book Again</Button>
+          </Link>
+        ) : (
+          <Button variant="danger" className="w-full" onClick={() => handleCancel(booking.id)}>
+            Cancel
+          </Button>
+        )}
+      </div>
+    </article>
+  );
+
   return (
     <PageShell
       eyebrow="My Bookings"
@@ -64,38 +112,30 @@ export default function MyBookings() {
         </div>
       )}
 
-      <div className="grid gap-4">
-        {bookings.map((booking) => (
-          <article
-            key={booking.id}
-            className="grid gap-4 rounded-md border border-slate-200 bg-white p-5 shadow-sm md:grid-cols-[120px_1fr_auto] md:items-center"
-          >
-            <img
-              className="h-24 w-full rounded-md object-cover md:w-28"
-              src={eventImageUrl(booking.event.imageUrl)}
-              alt=""
-            />
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-campus-teal">
-                {booking.status}
-              </p>
-              <h2 className="mt-1 text-xl font-bold text-campus-navy">{booking.event.title}</h2>
-              <p className="mt-2 text-sm text-slate-600">
-                {formatEventDate(booking.event.startDate)} at {formatEventTime(booking.event.startDate)} - {booking.event.location}
-              </p>
+      <div className="grid gap-8">
+        {activeBookings.length > 0 && (
+          <section aria-labelledby="active-bookings-heading">
+            <h2 id="active-bookings-heading" className="mb-4 text-lg font-bold text-campus-navy">
+              Confirmed bookings
+            </h2>
+            <div className="grid gap-4">
+              {activeBookings.map((booking) => renderBookingCard(booking))}
             </div>
-            <div className="flex gap-2 md:flex-col">
-              <Link to={`/events/${booking.event.id}`}>
-                <Button variant="secondary" className="w-full">
-                  View
-                </Button>
-              </Link>
-              <Button variant="danger" className="w-full" onClick={() => handleCancel(booking.id)}>
-                Cancel
-              </Button>
+          </section>
+        )}
+
+        {cancelledBookings.length > 0 && (
+          <section aria-labelledby="cancelled-bookings-heading">
+            <div className="mb-4 border-t border-slate-200 pt-6">
+              <h2 id="cancelled-bookings-heading" className="text-lg font-bold text-campus-navy">
+                Cancelled bookings
+              </h2>
             </div>
-          </article>
-        ))}
+            <div className="grid gap-4">
+              {cancelledBookings.map((booking) => renderBookingCard(booking, { isCancelled: true }))}
+            </div>
+          </section>
+        )}
       </div>
     </PageShell>
   );
