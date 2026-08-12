@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { getEvents } from '../api/eventApi.js';
 import EventCard from '../components/EventCard.jsx';
 import LoadingState from '../components/LoadingState.jsx';
@@ -7,9 +8,12 @@ import PageShell from '../components/PageShell.jsx';
 import { eventCategories } from '../utils/eventFormat.js';
 
 export default function Events() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const categoryFromUrl = searchParams.get('category');
+  const initialCategory = eventCategories.includes(categoryFromUrl) ? categoryFromUrl : 'All';
   const [events, setEvents] = useState([]);
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('All');
+  const [category, setCategory] = useState(initialCategory);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -22,6 +26,11 @@ export default function Events() {
       })
       .finally(() => setIsLoading(false));
   }, []);
+
+  useEffect(() => {
+    const nextCategory = eventCategories.includes(categoryFromUrl) ? categoryFromUrl : 'All';
+    setCategory(nextCategory);
+  }, [categoryFromUrl]);
 
   const filteredEvents = useMemo(() => {
     const searchText = search.trim().toLowerCase();
@@ -39,12 +48,33 @@ export default function Events() {
     });
   }, [category, events, search]);
 
+  function handleCategoryChange(event) {
+    const nextCategory = event.target.value;
+    setCategory(nextCategory);
+
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextCategory === 'All') {
+      nextParams.delete('category');
+    } else {
+      nextParams.set('category', nextCategory);
+    }
+
+    setSearchParams(nextParams);
+  }
+
   return (
     <PageShell
       eyebrow="Events"
       title="Find your next campus activity"
       description="Search and filter academic, career, cultural, wellbeing, and sports activities."
     >
+      <Link
+        to="/"
+        className="mb-6 inline-flex text-sm font-semibold text-campus-teal transition hover:text-teal-700"
+      >
+        ← Back to home
+      </Link>
+
       <div className="mb-8 grid gap-4 rounded-md border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[1fr_220px]">
         <label>
           <span className="mb-2 block text-sm font-semibold text-campus-navy">Search events</span>
@@ -60,7 +90,7 @@ export default function Events() {
           <select
             className="focus-ring w-full rounded-md border border-slate-300 bg-white px-4 py-3 text-sm"
             value={category}
-            onChange={(event) => setCategory(event.target.value)}
+            onChange={handleCategoryChange}
           >
             {eventCategories.map((item) => (
               <option key={item}>{item}</option>

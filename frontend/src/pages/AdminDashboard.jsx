@@ -81,10 +81,6 @@ export default function AdminDashboard() {
         </Link>
       </div>
 
-      <div className="mb-8">
-        <Notice>Current admin overview for campus events and bookings.</Notice>
-      </div>
-
       {isLoading && <LoadingState message="Loading dashboard..." />}
       {!isLoading && eventError && (
         <ErrorState title="Could not load events" message={eventError} />

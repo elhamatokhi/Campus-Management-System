@@ -31,3 +31,22 @@ textarea {
   @apply focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-campus-teal;
 }
 
+@keyframes campus-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.campus-marquee-track {
+  animation: campus-marquee 28s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campus-marquee-track {
+    animation: none;
+  }
+}
