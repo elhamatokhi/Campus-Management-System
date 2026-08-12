@@ -18,5 +18,7 @@ export const env = {
   databaseUrl: process.env.DATABASE_URL || '',
   userServiceUrl: process.env.USER_SERVICE_URL || 'http://localhost:4001',
   eventServiceUrl: process.env.EVENT_SERVICE_URL || 'http://localhost:4002',
-  bookingNotificationFunctionUrl: process.env.BOOKING_NOTIFICATION_FUNCTION_URL || '',
+  bookingNotificationStorageConnectionString:
+    process.env.BOOKING_NOTIFICATION_STORAGE_CONNECTION_STRING || '',
+  bookingNotificationQueue: process.env.BOOKING_NOTIFICATION_QUEUE || 'booking-notifications',
 };

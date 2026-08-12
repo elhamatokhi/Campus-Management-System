@@ -111,6 +111,7 @@ export LOCATION=<azure-region>
 export DATABASE_URL='<azure-postgresql-connection-string>'
 export JWT_SECRET='<strong-jwt-secret>'
 export AZURE_STORAGE_CONNECTION_STRING='<azure-storage-connection-string>'
+export BOOKING_NOTIFICATION_STORAGE_CONNECTION_STRING='<function-storage-connection-string>'
 ```
 
 Recommended optional values:
@@ -121,6 +122,7 @@ export ACR_LOGIN_SERVER=campusmngmntacr-hedvhmc7e6ccdret.azurecr.io
 export IMAGE_TAG=latest
 export AZURE_STORAGE_CONTAINER_NAME=event-images
 export MAX_IMAGE_UPLOAD_BYTES=5242880
+export BOOKING_NOTIFICATION_QUEUE=booking-notifications
 export JWT_EXPIRES_IN=1d
 ```
 
@@ -229,7 +231,7 @@ For lower idle cost after testing, set `MIN_REPLICAS=0`. For a demo where the ap
 - Do not place secrets in Dockerfiles.
 - Do not enable ACR admin user for this workflow.
 - Use Azure CLI authentication and a managed identity with `AcrPull`.
-- Store `DATABASE_URL`, `JWT_SECRET`, and `AZURE_STORAGE_CONNECTION_STRING` as Container Apps secrets.
+- Store `DATABASE_URL`, `JWT_SECRET`, `AZURE_STORAGE_CONNECTION_STRING`, and `BOOKING_NOTIFICATION_STORAGE_CONNECTION_STRING` as Container Apps secrets.
 - Keep non-secret values as normal environment variables.
 
 ## Troubleshooting

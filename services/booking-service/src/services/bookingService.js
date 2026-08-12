@@ -1,5 +1,6 @@
 import { BookingStatus, Prisma } from '@prisma/client';
 import { prisma } from '../config/prisma.js';
+import { publishBookingCreatedNotification } from './bookingNotificationQueue.js';
 import { createHttpError } from '../utils/httpError.js';
 
 export const plannedBookingFields = ['id', 'userId', 'eventId', 'status', 'createdAt'];
@@ -16,6 +17,22 @@ const bookingInclude = {
   event: { select: { id: true, title: true, startDate: true, location: true, capacity: true } },
 };
 
+const defaultDependencies = {
+  prisma,
+  publishBookingCreatedNotification,
+  logger: console,
+};
+
+let dependencies = { ...defaultDependencies };
+
+export function configureBookingServiceDependencies(overrides = {}) {
+  dependencies = { ...dependencies, ...overrides };
+}
+
+export function resetBookingServiceDependencies() {
+  dependencies = { ...defaultDependencies };
+}
+
 function isAdmin(user) {
   return user?.role === 'ADMIN';
 }
@@ -30,6 +47,16 @@ function requireBookingAccess(booking, user) {
   }
 }
 
+function enqueueBookingNotification(booking) {
+  void dependencies.publishBookingCreatedNotification(booking, dependencies.logger).catch((error) => {
+    dependencies.logger.warn?.('Booking created, but notification enqueue failed', {
+      bookingId: booking.id,
+      eventId: booking.eventId,
+      message: error?.message,
+    });
+  });
+}
+
 export async function createBookingRecord(payload = {}, user) {
   const userId = isAdmin(user) && payload.userId ? String(payload.userId).trim() : user?.id;
   const eventId = String(payload.eventId || '').trim();
@@ -41,7 +68,7 @@ export async function createBookingRecord(payload = {}, user) {
     throw createHttpError(400, 'eventId is required');
   }
 
-  const event = await prisma.event.findUnique({
+  const event = await dependencies.prisma.event.findUnique({
     where: { id: eventId },
     include: {
       _count: {
@@ -56,7 +83,7 @@ export async function createBookingRecord(payload = {}, user) {
     throw createHttpError(404, 'Event not found');
   }
 
-  const existingActiveBooking = await prisma.booking.findFirst({
+  const existingActiveBooking = await dependencies.prisma.booking.findFirst({
     where: {
       userId,
       eventId,
@@ -73,10 +100,13 @@ export async function createBookingRecord(payload = {}, user) {
   }
 
   try {
-    return await prisma.booking.create({
+    const booking = await dependencies.prisma.booking.create({
       data: { userId, eventId, status: BookingStatus.CONFIRMED },
       include: bookingInclude,
     });
+
+    enqueueBookingNotification(booking);
+    return booking;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
       throw createHttpError(400, 'userId does not reference an existing user');
@@ -107,7 +137,7 @@ export async function getBookingRecords(query = {}, user) {
     where.status = status;
   }
 
-  return prisma.booking.findMany({
+  return dependencies.prisma.booking.findMany({
     where,
     orderBy: { createdAt: 'desc' },
     include: bookingInclude,
@@ -115,7 +145,7 @@ export async function getBookingRecords(query = {}, user) {
 }
 
 export async function getBookingByIdRecord(id, user) {
-  const booking = await prisma.booking.findUnique({
+  const booking = await dependencies.prisma.booking.findUnique({
     where: { id },
     include: bookingInclude,
   });
@@ -126,11 +156,11 @@ export async function getBookingByIdRecord(id, user) {
 }
 
 export async function cancelBookingRecord(id, user) {
-  const booking = await prisma.booking.findUnique({ where: { id } });
+  const booking = await dependencies.prisma.booking.findUnique({ where: { id } });
   requireBookingAccess(booking, user);
 
   try {
-    return await prisma.booking.update({
+    return await dependencies.prisma.booking.update({
       where: { id },
       data: { status: BookingStatus.CANCELLED },
       include: bookingInclude,

@@ -12,7 +12,7 @@ The Booking Service will eventually handle:
 - Cancelling bookings
 - Preventing duplicate bookings
 - Checking event capacity before confirming a booking
-- Triggering a future Azure Function for booking notifications
+- Publishing booking notification messages to Azure Storage Queue for the Azure Function
 
 As of Phase 7, booking creation, listing, reading, and cancellation require JWT authentication and use PostgreSQL through Prisma.
 
@@ -26,11 +26,11 @@ As of Phase 7, booking creation, listing, reading, and cancellation require JWT 
 
 ## Planned Service Interactions
 
-The Booking Service will later communicate with:
+The Booking Service communicates with:
 
 - User Service: confirm the authenticated user and role.
 - Event Service: check event details and available capacity.
-- Azure Function: send or process booking notifications after booking creation.
+- Azure Storage Queue: publish booking notification messages for the queue-triggered Azure Function.
 
 ## Endpoints
 
@@ -105,9 +105,28 @@ Available variables:
 - `DATABASE_URL`: PostgreSQL connection string
 - `USER_SERVICE_URL`: future User Service base URL
 - `EVENT_SERVICE_URL`: future Event Service base URL
-- `BOOKING_NOTIFICATION_FUNCTION_URL`: future Azure Function URL for booking notifications
+- `BOOKING_NOTIFICATION_STORAGE_CONNECTION_STRING`: Azure Storage connection string used to publish booking notification queue messages. Leave empty locally to skip notification publishing.
+- `BOOKING_NOTIFICATION_QUEUE`: queue name for booking notifications, default `booking-notifications`
 
 Do not commit real secrets.
+
+## Booking Notification Queue
+
+After a booking is created successfully, the service attempts to publish this message shape:
+
+```json
+{
+  "bookingId": "booking-id",
+  "eventId": "event-id",
+  "eventTitle": "Cybersecurity Workshop",
+  "userEmail": "student@example.com",
+  "userName": "Alex Student",
+  "status": "CONFIRMED",
+  "createdAt": "2026-08-12T15:59:00.000Z"
+}
+```
+
+Queue publishing is intentionally best-effort. If the queue is not configured or Azure Storage is temporarily unavailable, the booking response still succeeds and the service logs a safe diagnostic.
 
 ## Quick Checks
 
