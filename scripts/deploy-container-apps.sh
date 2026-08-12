@@ -36,11 +36,17 @@ require_vars() {
 required_vars=(RESOURCE_GROUP LOCATION)
 
 case "$target" in
-  user|booking)
+  user)
     required_vars+=(DATABASE_URL JWT_SECRET)
     ;;
-  event|all)
+  event)
     required_vars+=(DATABASE_URL JWT_SECRET AZURE_STORAGE_CONNECTION_STRING)
+    ;;
+  booking)
+    required_vars+=(DATABASE_URL JWT_SECRET BOOKING_NOTIFICATION_STORAGE_CONNECTION_STRING)
+    ;;
+  all)
+    required_vars+=(DATABASE_URL JWT_SECRET AZURE_STORAGE_CONNECTION_STRING BOOKING_NOTIFICATION_STORAGE_CONNECTION_STRING)
     ;;
   frontend)
     ;;
@@ -62,7 +68,7 @@ IMAGE_TAG="${IMAGE_TAG:-latest}"
 JWT_EXPIRES_IN="${JWT_EXPIRES_IN:-1d}"
 AZURE_STORAGE_CONTAINER_NAME="${AZURE_STORAGE_CONTAINER_NAME:-event-images}"
 MAX_IMAGE_UPLOAD_BYTES="${MAX_IMAGE_UPLOAD_BYTES:-5242880}"
-BOOKING_NOTIFICATION_FUNCTION_URL="${BOOKING_NOTIFICATION_FUNCTION_URL:-}"
+BOOKING_NOTIFICATION_QUEUE="${BOOKING_NOTIFICATION_QUEUE:-booking-notifications}"
 
 MIN_REPLICAS="${MIN_REPLICAS:-1}"
 MAX_REPLICAS="${MAX_REPLICAS:-3}"
@@ -72,6 +78,7 @@ FRONTEND_CPU="${FRONTEND_CPU:-0.25}"
 FRONTEND_MEMORY="${FRONTEND_MEMORY:-0.5Gi}"
 
 placeholder_frontend_origin="https://placeholder.invalid"
+backend_frontend_origin="$placeholder_frontend_origin"
 config_refresh="${CONFIG_REFRESH:-$(date +%s)}"
 
 echo "Stage 1: verify Azure CLI login and target subscription"
@@ -141,6 +148,24 @@ container_app_exists() {
   az containerapp show --name "$app_name" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1
 }
 
+set_backend_frontend_origin_from_existing_frontend() {
+  local frontend_fqdn
+
+  if ! container_app_exists "$FRONTEND_APP_NAME"; then
+    echo "Using placeholder CORS origin because ${FRONTEND_APP_NAME} does not exist yet."
+    return
+  fi
+
+  frontend_fqdn="$(az containerapp show --name "$FRONTEND_APP_NAME" --resource-group "$RESOURCE_GROUP" --query properties.configuration.ingress.fqdn --output tsv)"
+
+  if [[ -z "$frontend_fqdn" ]]; then
+    echo "Using placeholder CORS origin because ${FRONTEND_APP_NAME} does not have an ingress FQDN yet."
+    return
+  fi
+
+  backend_frontend_origin="https://$frontend_fqdn"
+}
+
 configure_existing_app_common() {
   local app_name="$1"
   local ingress_type="$2"
@@ -193,7 +218,7 @@ deploy_user_service() {
       --set-env-vars \
         NODE_ENV=production \
         PORT=4001 \
-        FRONTEND_ORIGIN="$placeholder_frontend_origin" \
+        FRONTEND_ORIGIN="$backend_frontend_origin" \
         DATABASE_URL=secretref:database-url \
         JWT_SECRET=secretref:jwt-secret \
         JWT_EXPIRES_IN="$JWT_EXPIRES_IN" \
@@ -219,7 +244,7 @@ deploy_user_service() {
       --env-vars \
         NODE_ENV=production \
         PORT=4001 \
-        FRONTEND_ORIGIN="$placeholder_frontend_origin" \
+        FRONTEND_ORIGIN="$backend_frontend_origin" \
         DATABASE_URL=secretref:database-url \
         JWT_SECRET=secretref:jwt-secret \
         JWT_EXPIRES_IN="$JWT_EXPIRES_IN" \
@@ -254,7 +279,7 @@ deploy_event_service() {
       --set-env-vars \
         NODE_ENV=production \
         PORT=4002 \
-        FRONTEND_ORIGIN="$placeholder_frontend_origin" \
+        FRONTEND_ORIGIN="$backend_frontend_origin" \
         DATABASE_URL=secretref:database-url \
         JWT_SECRET=secretref:jwt-secret \
         JWT_EXPIRES_IN="$JWT_EXPIRES_IN" \
@@ -286,7 +311,7 @@ deploy_event_service() {
       --env-vars \
         NODE_ENV=production \
         PORT=4002 \
-        FRONTEND_ORIGIN="$placeholder_frontend_origin" \
+        FRONTEND_ORIGIN="$backend_frontend_origin" \
         DATABASE_URL=secretref:database-url \
         JWT_SECRET=secretref:jwt-secret \
         JWT_EXPIRES_IN="$JWT_EXPIRES_IN" \
@@ -308,7 +333,10 @@ deploy_booking_service() {
     az containerapp secret set \
       --name "$BOOKING_APP_NAME" \
       --resource-group "$RESOURCE_GROUP" \
-      --secrets database-url="$DATABASE_URL" jwt-secret="$JWT_SECRET" \
+      --secrets \
+        database-url="$DATABASE_URL" \
+        jwt-secret="$JWT_SECRET" \
+        booking-notification-storage="$BOOKING_NOTIFICATION_STORAGE_CONNECTION_STRING" \
       --output none
     az containerapp update \
       --name "$BOOKING_APP_NAME" \
@@ -321,13 +349,14 @@ deploy_booking_service() {
       --set-env-vars \
         NODE_ENV=production \
         PORT=4003 \
-        FRONTEND_ORIGIN="$placeholder_frontend_origin" \
+        FRONTEND_ORIGIN="$backend_frontend_origin" \
         DATABASE_URL=secretref:database-url \
         JWT_SECRET=secretref:jwt-secret \
         JWT_EXPIRES_IN="$JWT_EXPIRES_IN" \
         USER_SERVICE_URL="http://$USER_APP_NAME" \
         EVENT_SERVICE_URL="http://$EVENT_APP_NAME" \
-        BOOKING_NOTIFICATION_FUNCTION_URL="$BOOKING_NOTIFICATION_FUNCTION_URL" \
+        BOOKING_NOTIFICATION_STORAGE_CONNECTION_STRING=secretref:booking-notification-storage \
+        BOOKING_NOTIFICATION_QUEUE="$BOOKING_NOTIFICATION_QUEUE" \
         CONFIG_REFRESH="$config_refresh" \
       --output none
   else
@@ -346,17 +375,21 @@ deploy_booking_service() {
       --max-replicas "$MAX_REPLICAS" \
       --cpu "$BACKEND_CPU" \
       --memory "$BACKEND_MEMORY" \
-      --secrets database-url="$DATABASE_URL" jwt-secret="$JWT_SECRET" \
+      --secrets \
+        database-url="$DATABASE_URL" \
+        jwt-secret="$JWT_SECRET" \
+        booking-notification-storage="$BOOKING_NOTIFICATION_STORAGE_CONNECTION_STRING" \
       --env-vars \
         NODE_ENV=production \
         PORT=4003 \
-        FRONTEND_ORIGIN="$placeholder_frontend_origin" \
+        FRONTEND_ORIGIN="$backend_frontend_origin" \
         DATABASE_URL=secretref:database-url \
         JWT_SECRET=secretref:jwt-secret \
         JWT_EXPIRES_IN="$JWT_EXPIRES_IN" \
         USER_SERVICE_URL="http://$USER_APP_NAME" \
         EVENT_SERVICE_URL="http://$EVENT_APP_NAME" \
-        BOOKING_NOTIFICATION_FUNCTION_URL="$BOOKING_NOTIFICATION_FUNCTION_URL" \
+        BOOKING_NOTIFICATION_STORAGE_CONNECTION_STRING=secretref:booking-notification-storage \
+        BOOKING_NOTIFICATION_QUEUE="$BOOKING_NOTIFICATION_QUEUE" \
         CONFIG_REFRESH="$config_refresh" \
       --output none
   fi
@@ -431,18 +464,18 @@ update_backend_cors_from_frontend() {
 case "$target" in
   user)
     echo "Stage 7: deploy internal User Service"
+    set_backend_frontend_origin_from_existing_frontend
     deploy_user_service
-    update_backend_cors_from_frontend
     ;;
   event)
     echo "Stage 7: deploy internal Event Service"
+    set_backend_frontend_origin_from_existing_frontend
     deploy_event_service
-    update_backend_cors_from_frontend
     ;;
   booking)
     echo "Stage 7: deploy internal Booking Service"
+    set_backend_frontend_origin_from_existing_frontend
     deploy_booking_service
-    update_backend_cors_from_frontend
     ;;
   frontend)
     echo "Stage 7: deploy external frontend"
