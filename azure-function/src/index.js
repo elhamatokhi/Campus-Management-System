@@ -1,0 +1,1 @@
+import './functions/bookingNotificationProcessor.js';
