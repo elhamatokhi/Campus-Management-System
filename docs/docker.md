@@ -1,7 +1,5 @@
 # Docker And Compose
 
-Docker packages an application and its runtime dependencies into an image. A container is a running instance of an image. Docker Compose runs several containers together on one local network.
-
 This project has five local Compose services:
 
 - `postgres`: PostgreSQL database
@@ -35,7 +33,7 @@ docker compose build
 
 ## Azure Container Registry
 
-For Azure deployment preparation, tag these same images with an ACR login server and push them:
+For Azure deployment, images are built and pushed with an ACR login server:
 
 ```text
 <registry>.azurecr.io/campus-frontend:latest
@@ -53,18 +51,15 @@ az acr login --name <registry-name>
 
 The complete tag, push, and verification workflow is documented in [Azure Container Registry](azure-container-registry.md).
 
-## Azure Container Apps Frontend Image
+## Azure Container Apps Images
 
-The local Compose frontend image is built with browser-facing localhost API URLs. Azure Container Apps uses internal service names instead, so the frontend needs a deployment-specific image build:
+Local Compose images are built for local Docker networking. Azure Container Apps images are built separately as `linux/amd64` images:
 
 ```bash
-docker build \
-  -f infra/container-apps/frontend.Dockerfile \
-  -t campusmngmntacr-hedvhmc7e6ccdret.azurecr.io/campus-frontend:latest \
-  .
+IMAGE_TAG=<unique-tag> ./scripts/build-push-aca-images.sh all
 ```
 
-That image builds Vite with same-origin API paths and uses nginx to proxy:
+The Container Apps frontend image builds Vite with same-origin API paths and uses nginx to proxy:
 
 ```text
 /api/users -> http://campus-user-service
@@ -72,11 +67,11 @@ That image builds Vite with same-origin API paths and uses nginx to proxy:
 /api/bookings -> http://campus-booking-service
 ```
 
-The backend images do not need this rebuild.
+Explicit image tags are uesd for deployment updates instead of relying only on mutable `latest`.
 
 ## Environment
 
-Local development uses the root `.env` file. Do not commit real secrets.
+Local development uses the root `.env` file.
 
 Backend containers receive runtime configuration from `.env`, with Compose overrides for container networking:
 
@@ -86,9 +81,7 @@ DATABASE_URL=${LOCAL_DATABASE_URL}
 FRONTEND_ORIGIN=http://localhost:8080
 ```
 
-Use the raw local password in `POSTGRES_PASSWORD`, and URL-encode that password in `LOCAL_DATABASE_URL` if it contains reserved URL characters.
-
-For Azure deployment later, use the same backend images and supply an Azure PostgreSQL `DATABASE_URL` at runtime instead of the Compose-local `postgres` URL.
+For Azure deployment, supply an Azure PostgreSQL `DATABASE_URL` at runtime instead of the Compose-local `postgres` URL.
 
 The Event Service also receives Azure Blob Storage configuration at runtime:
 
@@ -110,8 +103,6 @@ user-service:4001
 event-service:4002
 booking-service:4003
 ```
-
-Do not use `localhost` for container-to-container traffic. Inside a container, `localhost` means that same container.
 
 The production frontend is different because API calls are made by the user's browser, not by the nginx container. Browser-facing API URLs must use host ports:
 
@@ -198,15 +189,4 @@ curl http://localhost:4001/health
 curl http://localhost:4002/health
 curl http://localhost:4003/health
 curl http://localhost:8080
-```
-
-## Non-Docker Development
-
-The original local workflow still works:
-
-```bash
-npm run dev:user-service
-npm run dev:event-service
-npm run dev:booking-service
-npm run dev:frontend
 ```

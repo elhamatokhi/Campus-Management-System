@@ -1,259 +1,236 @@
 # Azure Container Apps Deployment
 
-This phase prepares deployment to Azure Container Apps without using AKS.
+Azure Container Apps (ACA) is the active container orchestration platform for the Campus Management System. It hosts the React frontend and the three backend microservices while integrating with the other Azure services used by the application.
 
-The deployment model is:
+## Deployment Architecture
+
+The deployed application follows this structure:
 
 ```text
 Browser
--> external Azure Container App: campus-frontend
--> nginx /api proxy
--> internal Azure Container Apps:
-   - campus-user-service
-   - campus-event-service
-   - campus-booking-service
--> Azure Database for PostgreSQL
--> Azure Blob Storage for event images
+   ↓
+Azure Container Apps
+   ↓
+Frontend (React + NGINX)
+   │
+   ├── /api/users     → User Service
+   ├── /api/events    → Event Service
+   └── /api/bookings  → Booking Service
+                           │
+       ┌───────────────────┼────────────────────┐
+       ↓                   ↓                    ↓
+Azure PostgreSQL    Azure Blob Storage    Azure Storage Queue
+                                              ↓
+                                        Azure Function
 ```
 
-No Azure resources are created by this repository until you run the deployment script manually.
+The frontend is externally accessible, while the backend services use internal Container Apps ingress and are reached through the frontend NGINX reverse proxy.
 
-## Expected Azure Resources
+## Container Apps
 
-Use your existing Azure resources where possible:
+Four application containers are deployed:
 
-- Azure Container Registry: `campusmngmntacr`
-- ACR login server: `campusmngmntacr-hedvhmc7e6ccdret.azurecr.io`
-- Azure Database for PostgreSQL
-- Azure Blob Storage container: `event-images`
+- `campus-frontend`
+- `campus-user-service`
+- `campus-event-service`
+- `campus-booking-service`
 
-The deployment script creates these Container Apps resources when you run it:
+They run inside the `campus-containerapps-env` Container Apps environment.
 
-- Container Apps environment: `campus-containerapps-env`
-- User-assigned managed identity: `campus-containerapps-acr-pull`
-- Container App: `campus-frontend`
-- Container App: `campus-user-service`
-- Container App: `campus-event-service`
-- Container App: `campus-booking-service`
+The frontend provides the public entry point to the application. The backend services remain internal and expose the application APIs to the frontend through same-origin routing.
 
-The script grants the managed identity `AcrPull` on the existing ACR. It does not use registry passwords and does not require the ACR admin user.
+## Frontend and API Routing
 
-## Image Build And Push
+During local development, the frontend communicates with backend services through local ports.
 
-Vite reads `VITE_*` API URLs at build time. The existing local Docker Compose frontend image is built for browser calls to:
+In Azure, the frontend instead uses same-origin API paths:
 
 ```text
-http://localhost:4001
-http://localhost:4002
-http://localhost:4003
-```
-
-Those URLs are not valid from an Azure-hosted browser session.
-
-For Container Apps, the frontend is rebuilt with empty `VITE_*` values so the React app calls same-origin paths such as:
-
-```text
-/api/users/login
+/api/users
 /api/events
 /api/bookings
 ```
 
-The Container Apps-specific nginx config then proxies those paths to internal Container App names:
+The production NGINX container routes these requests to the corresponding internal Container Apps:
 
 ```text
-http://campus-user-service
-http://campus-event-service
-http://campus-booking-service
+/api/users     → campus-user-service
+/api/events    → campus-event-service
+/api/bookings  → campus-booking-service
 ```
 
-Build and push Azure Container Apps-compatible images separately from deployment:
+This avoids exposing each backend service publicly and prevents browser mixed-content and internal DNS issues.
+
+## Container Images
+
+Application images are stored in Azure Container Registry and built for:
+
+```text
+linux/amd64
+```
+
+Docker Buildx is used because development was performed on Apple Silicon (`arm64`) while the Azure deployment requires compatible AMD64 images.
+
+Image building and deployment are intentionally separated:
+
+```text
+Source Code
+    ↓
+Docker Buildx
+    ↓
+Azure Container Registry
+    ↓
+Azure Container Apps
+```
+
+The project provides:
 
 ```bash
-./scripts/build-push-aca-images.sh user
-./scripts/build-push-aca-images.sh event
-./scripts/build-push-aca-images.sh booking
-./scripts/build-push-aca-images.sh frontend
-./scripts/build-push-aca-images.sh all
+./scripts/build-push-aca-images.sh
+./scripts/deploy-container-apps.sh
 ```
 
-The build script uses `docker buildx build --platform linux/amd64 --provenance=false --push`. Set `IMAGE_TAG` when you want a unique deployment tag:
+Both scripts support `user`, `event`, `booking`, `frontend`, and `all` targets, allowing individual services to be rebuilt or redeployed without affecting the entire application.
 
-```bash
-IMAGE_TAG=frontend-fix-1 ./scripts/build-push-aca-images.sh frontend
+Unique image tags can be used to identify exactly which build is associated with a Container Apps revision.
+
+## Managed Identity and ACR
+
+Azure Container Apps retrieves private application images from Azure Container Registry using a user-assigned managed identity.
+
+The identity:
+
+```text
+campus-containerapps-acr-pull
 ```
 
-## Required Local Tools
+is granted the Azure `AcrPull` role on the registry.
 
-- Azure CLI
-- Docker Desktop
-- Logged-in Azure CLI session
+The relationship is:
 
-Install or update the Container Apps extension if needed:
-
-```bash
-az extension add --name containerapp --upgrade
+```text
+Azure Container Registry
+        ↓
+Managed Identity + AcrPull
+        ↓
+Azure Container Apps
 ```
 
-Log in:
+This avoids storing registry usernames or passwords in the application configuration.
 
-```bash
-az login
-az acr login --name campusmngmntacr
+## Runtime Configuration and Secrets
+
+Environment-specific configuration is supplied when the containers are deployed rather than being included in the Docker images.
+
+Sensitive values include:
+
+```text
+DATABASE_URL
+JWT_SECRET
+AZURE_STORAGE_CONNECTION_STRING
+BOOKING_NOTIFICATION_STORAGE_CONNECTION_STRING
 ```
 
-## Required Environment Variables
+These values are stored as Container Apps secrets and referenced through environment variables.
 
-Set these in your shell before running the script. Do not commit these values.
+Other configuration includes the event-image container name, booking notification queue name, JWT expiration, frontend origin, and internal service URLs.
 
-```bash
-export RESOURCE_GROUP=<your-resource-group>
-export LOCATION=<azure-region>
-export DATABASE_URL='<azure-postgresql-connection-string>'
-export JWT_SECRET='<strong-jwt-secret>'
-export AZURE_STORAGE_CONNECTION_STRING='<azure-storage-connection-string>'
-export BOOKING_NOTIFICATION_STORAGE_CONNECTION_STRING='<function-storage-connection-string>'
+This allows the same application images to be used with different runtime environments without embedding credentials in the images.
+
+## Scaling and Resources
+
+The project uses a Consumption-based Container Apps environment with small CPU and memory allocations appropriate for a university demonstration application.
+
+The deployment is configured with:
+
+```text
+Minimum replicas: 1
+Maximum replicas: 3
 ```
 
-Recommended optional values:
+A minimum of one replica keeps each application available for the live demo, while Azure can create additional replicas when required.
 
-```bash
-export ACR_NAME=campusmngmntacr
-export ACR_LOGIN_SERVER=campusmngmntacr-hedvhmc7e6ccdret.azurecr.io
-export IMAGE_TAG=latest
-export AZURE_STORAGE_CONTAINER_NAME=event-images
-export MAX_IMAGE_UPLOAD_BYTES=5242880
-export BOOKING_NOTIFICATION_QUEUE=booking-notifications
-export JWT_EXPIRES_IN=1d
-```
+The maximum of three limits resource usage for the student environment.
 
-Scaling defaults:
+After demonstration and evaluation, the minimum replica count can be reduced to `0` if lower idle resource usage is preferred.
 
-```bash
-export MIN_REPLICAS=1
-export MAX_REPLICAS=3
-```
+## Health and Availability
 
-## Deploy
-
-Run from the repository root:
-
-```bash
-./scripts/deploy-container-apps.sh user
-./scripts/deploy-container-apps.sh event
-./scripts/deploy-container-apps.sh booking
-./scripts/deploy-container-apps.sh frontend
-./scripts/deploy-container-apps.sh all
-```
-
-The script stages are:
-
-1. Verify Azure CLI login.
-2. Verify the existing ACR.
-3. Create or verify the Container Apps environment.
-4. Create or verify a user-assigned managed identity.
-5. Grant `AcrPull` on ACR to that identity.
-6. Use the requested images already present in ACR.
-7. Create or update the selected Container App target.
-8. Update backend CORS origins to the final frontend URL when the frontend app exists.
-
-The script is idempotent for normal reruns. It reuses the Container Apps environment, managed identity, and ACR role assignment when they already exist. For each expected Container App, it creates the app if missing and updates image, registry identity, secrets, environment variables, ingress, and replica settings if the app already exists.
-
-## Health Checks
-
-The services already expose:
+The backend services expose:
 
 ```text
 GET /health
 ```
 
-Azure Container Apps adds default TCP startup, liveness, and readiness probes when ingress is enabled and explicit probes are not supplied. Microsoft documents custom HTTP probes as YAML configuration. If explicit `/health` HTTP probes are required later, add them through an ACA YAML or Bicep deployment. This script keeps the first deployment simple and verifies health through the running app.
+These endpoints provide a lightweight way to confirm that each service is running and responding.
 
-## Test After Deployment
+Azure Container Apps also manages container startup, readiness, revisions, ingress, and replica lifecycle as part of the orchestration environment.
 
-Get the frontend URL:
+## Deployment Workflow
 
-```bash
-az containerapp show \
-  --name campus-frontend \
-  --resource-group $RESOURCE_GROUP \
-  --query properties.configuration.ingress.fqdn \
-  --output tsv
-```
+The deployment script manages the Container Apps-specific parts of the cloud deployment.
 
-Open:
+Its main responsibilities are:
+
+1. Verify the Azure environment and existing Container Registry.
+2. Create or reuse the Container Apps environment.
+3. Create or reuse the managed identity.
+4. Ensure the identity has `AcrPull` access.
+5. Deploy the requested image from ACR.
+6. Configure secrets and environment variables.
+7. Configure internal or external ingress.
+8. Create a new Container Apps revision when application configuration or images change.
+
+The workflow is designed to be safely rerunnable and supports deploying individual application components.
+
+## Revisions
+
+Azure Container Apps creates revisions when application images or revision-scoped configuration change.
+
+This was useful during development because individual deployments could be identified by both their image tag and revision.
+
+For example:
 
 ```text
-https://<frontend-fqdn>
+Source change
+    ↓
+New image tag
+    ↓
+Image pushed to ACR
+    ↓
+Container App updated
+    ↓
+New revision
 ```
 
-Check app status:
+Using unique image tags made deployment verification and troubleshooting more reliable than relying only on the mutable `latest` tag.
 
-```bash
-az containerapp show --name campus-user-service --resource-group $RESOURCE_GROUP --query properties.runningStatus
-az containerapp show --name campus-event-service --resource-group $RESOURCE_GROUP --query properties.runningStatus
-az containerapp show --name campus-booking-service --resource-group $RESOURCE_GROUP --query properties.runningStatus
-az containerapp show --name campus-frontend --resource-group $RESOURCE_GROUP --query properties.runningStatus
+## Integration with Other Azure Services
+
+The Container Apps deployment forms the application layer of the larger Azure architecture:
+
+```text
+Azure Container Registry
+        ↓
+Azure Container Apps
+        │
+        ├── Azure Database for PostgreSQL
+        ├── Azure Blob Storage
+        └── Azure Storage Queue
+                    ↓
+              Azure Function
 ```
 
-Check recent revisions:
+PostgreSQL provides persistent application data, Blob Storage stores event images, and the Booking Service publishes notification messages to Azure Storage Queue for asynchronous processing by the Azure Function.
 
-```bash
-az containerapp revision list --name campus-frontend --resource-group $RESOURCE_GROUP --output table
-az containerapp revision list --name campus-user-service --resource-group $RESOURCE_GROUP --output table
-az containerapp revision list --name campus-event-service --resource-group $RESOURCE_GROUP --output table
-az containerapp revision list --name campus-booking-service --resource-group $RESOURCE_GROUP --output table
+## Final Deployment
+
+The deployed frontend provides the public entry point to the complete application:
+
+```text
+https://campus-frontend.icyglacier-9ccad18f.francecentral.azurecontainerapps.io
 ```
 
-Basic browser flow:
+The backend Container Apps remain internal and are accessed through the frontend's NGINX proxy.
 
-1. Register or log in.
-2. Load Events.
-3. Open Event Details.
-4. Book an event as a student.
-5. Log in as admin.
-6. Create or edit an event with image upload.
-
-## Cost Notes
-
-The script uses:
-
-- Consumption Container Apps environment.
-- Minimum 1 replica per app.
-- Maximum 3 replicas per app.
-- Small CPU and memory allocations by default.
-- `--logs-destination none` to avoid creating a Log Analytics workspace automatically.
-
-For lower idle cost after testing, set `MIN_REPLICAS=0`. For a demo where the app should stay warm, keep `MIN_REPLICAS=1`.
-
-## Security Notes
-
-- Do not commit `.env`.
-- Do not place secrets in Dockerfiles.
-- Do not enable ACR admin user for this workflow.
-- Use Azure CLI authentication and a managed identity with `AcrPull`.
-- Store `DATABASE_URL`, `JWT_SECRET`, `AZURE_STORAGE_CONNECTION_STRING`, and `BOOKING_NOTIFICATION_STORAGE_CONNECTION_STRING` as Container Apps secrets.
-- Keep non-secret values as normal environment variables.
-
-## Troubleshooting
-
-If images cannot be pulled:
-
-```bash
-az role assignment list \
-  --assignee $(az identity show --name campus-containerapps-acr-pull --resource-group $RESOURCE_GROUP --query principalId --output tsv) \
-  --scope $(az acr show --name campusmngmntacr --resource-group $RESOURCE_GROUP --query id --output tsv) \
-  --output table
-```
-
-If frontend API calls fail:
-
-- Confirm the frontend image was rebuilt using `infra/container-apps/frontend.Dockerfile`.
-- Confirm the backend apps are in the same Container Apps environment as the frontend.
-- Confirm backend `FRONTEND_ORIGIN` equals the frontend HTTPS origin.
-- Check browser network requests. They should call `/api/...` on the frontend host, not `localhost`.
-
-If database calls fail:
-
-- Confirm `DATABASE_URL` points to Azure PostgreSQL.
-- Confirm Azure PostgreSQL firewall/networking allows Container Apps outbound traffic for this phase.
-- Confirm Prisma migrations were already applied to the Azure PostgreSQL database.
+Azure Container Apps therefore provides the final orchestration layer connecting the project's containerized frontend and microservices with the managed Azure database, storage, and serverless components.

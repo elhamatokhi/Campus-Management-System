@@ -1,157 +1,86 @@
 # Azure Container Registry
 
-Azure Container Registry stores Docker images in Azure so AKS can pull them later.
+Azure Container Registry (ACR) is used as the private container image registry for the Campus Management System. It stores the Docker images that are deployed to Azure Container Apps.
 
-Flow:
-
-```text
-local Docker image
--> tag with <registry>.azurecr.io/<image>:<tag>
--> push to Azure Container Registry
--> later AKS pulls the image
-```
-
-Do not commit registry credentials. Do not bake Azure credentials or application secrets into Docker images.
-
-## Images
-
-Keep these logical image names:
+The deployment flow is:
 
 ```text
-campus-frontend
-campus-user-service
-campus-event-service
-campus-booking-service
+Application Source
+→ Docker Image
+→ Azure Container Registry
+→ Azure Container Apps
 ```
 
-ACR image names use the registry login server:
+## Container Images
+
+The project consists of four deployable container images:
+
+- `campus-frontend`
+- `campus-user-service`
+- `campus-event-service`
+- `campus-booking-service`
+
+Each image represents an independently deployable part of the application. Images are tagged and pushed to the project's Azure Container Registry before being deployed to Azure Container Apps.
+
+## Image Build and Push
+
+The project provides a dedicated script for building and pushing images to ACR:
+
+```bash
+IMAGE_TAG=<unique-tag> ./scripts/build-push-aca-images.sh all
+```
+
+Individual components can also be built by using `frontend`, `user`, `event`, or `booking` instead of `all`.
+
+Because development was performed on Apple Silicon while the Azure deployment requires compatible AMD64 images, the build workflow uses Docker Buildx to produce `linux/amd64` images before pushing them to ACR.
+
+Image building and Azure deployment are intentionally kept as separate operations. This allows an existing image to be redeployed without rebuilding the application and makes individual services easier to update and troubleshoot.
+
+## Integration with Azure Container Apps
+
+Azure Container Apps retrieves the application images directly from ACR during deployment.
+
+A user-assigned managed identity is used for this integration and is granted the `AcrPull` role on the registry. This allows Container Apps to retrieve private images without storing ACR usernames or passwords in the application configuration.
+
+The relationship is:
 
 ```text
-<registry>.azurecr.io/campus-frontend:latest
-<registry>.azurecr.io/campus-user-service:latest
-<registry>.azurecr.io/campus-event-service:latest
-<registry>.azurecr.io/campus-booking-service:latest
+Azure Container Registry
+        |
+        | AcrPull
+        v
+Managed Identity
+        |
+        v
+Azure Container Apps
 ```
 
-Use `latest` for the simple project workflow. Also push a stable version tag such as `v1.0.0` when you want a repeatable deployment reference.
+Each Container App references the appropriate ACR image for its frontend or backend service.
 
-## Manual Azure Portal Setup
+## Security
 
-Create an Azure Container Registry manually:
+The registry is used only for application images. Application secrets such as database credentials, JWT secrets, and Azure Storage connection strings are not included in the images.
 
-- Subscription: choose your Azure for Students subscription.
-- Resource group: create or reuse the project resource group.
-- Registry name: choose a globally unique lowercase name, for example `campusregistry<initials>`.
-- Region: choose a region allowed by your subscription.
-- SKU: `Basic`.
-- Public network access: enabled for this phase so your local machine can push images.
-- Admin user: disabled. Use Azure CLI / Microsoft Entra authentication instead.
+ACR authentication is handled through Azure identity mechanisms, while application secrets are supplied separately through the runtime configuration of Azure Container Apps.
 
-Use `Basic` because this project only needs a small private registry for development and AKS image pulls. Do not choose Standard or Premium unless project requirements change.
+No registry credentials or application secrets are stored in the repository.
 
-## Azure CLI Login
+## Role in the Final Architecture
 
-Set placeholders in your terminal after creating the registry:
+ACR connects the project's container build process with its production deployment:
 
-```bash
-ACR_NAME=<registry-name-without.azurecr.io>
-ACR_LOGIN_SERVER=$ACR_NAME.azurecr.io
-IMAGE_VERSION=v1.0.0
+```text
+Source Code
+    ↓
+Docker Buildx
+    ↓
+linux/amd64 Images
+    ↓
+Azure Container Registry
+    ↓
+Azure Container Apps
+    ↓
+Running Application
 ```
 
-Log in to Azure and ACR:
-
-```bash
-az login
-az acr login --name $ACR_NAME
-```
-
-`az acr login` uses your Azure CLI identity and Docker. It does not require storing registry passwords in this repository.
-
-## Build Local Images
-
-If needed, rebuild the images:
-
-```bash
-npm run docker:build
-```
-
-Confirm local images exist:
-
-```bash
-docker image ls campus-frontend
-docker image ls campus-user-service
-docker image ls campus-event-service
-docker image ls campus-booking-service
-```
-
-## Tag Images
-
-Tag `latest`:
-
-```bash
-docker tag campus-frontend:latest $ACR_LOGIN_SERVER/campus-frontend:latest
-docker tag campus-user-service:latest $ACR_LOGIN_SERVER/campus-user-service:latest
-docker tag campus-event-service:latest $ACR_LOGIN_SERVER/campus-event-service:latest
-docker tag campus-booking-service:latest $ACR_LOGIN_SERVER/campus-booking-service:latest
-```
-
-Tag `v1.0.0`:
-
-```bash
-docker tag campus-frontend:latest $ACR_LOGIN_SERVER/campus-frontend:$IMAGE_VERSION
-docker tag campus-user-service:latest $ACR_LOGIN_SERVER/campus-user-service:$IMAGE_VERSION
-docker tag campus-event-service:latest $ACR_LOGIN_SERVER/campus-event-service:$IMAGE_VERSION
-docker tag campus-booking-service:latest $ACR_LOGIN_SERVER/campus-booking-service:$IMAGE_VERSION
-```
-
-## Push Images
-
-Push `latest`:
-
-```bash
-docker push $ACR_LOGIN_SERVER/campus-frontend:latest
-docker push $ACR_LOGIN_SERVER/campus-user-service:latest
-docker push $ACR_LOGIN_SERVER/campus-event-service:latest
-docker push $ACR_LOGIN_SERVER/campus-booking-service:latest
-```
-
-Push `v1.0.0`:
-
-```bash
-docker push $ACR_LOGIN_SERVER/campus-frontend:$IMAGE_VERSION
-docker push $ACR_LOGIN_SERVER/campus-user-service:$IMAGE_VERSION
-docker push $ACR_LOGIN_SERVER/campus-event-service:$IMAGE_VERSION
-docker push $ACR_LOGIN_SERVER/campus-booking-service:$IMAGE_VERSION
-```
-
-## Verify In ACR
-
-List repositories:
-
-```bash
-az acr repository list --name $ACR_NAME --output table
-```
-
-Confirm tags:
-
-```bash
-az acr repository show-tags --name $ACR_NAME --repository campus-frontend --output table
-az acr repository show-tags --name $ACR_NAME --repository campus-user-service --output table
-az acr repository show-tags --name $ACR_NAME --repository campus-event-service --output table
-az acr repository show-tags --name $ACR_NAME --repository campus-booking-service --output table
-```
-
-Inspect one image:
-
-```bash
-az acr repository show --name $ACR_NAME --image campus-frontend:latest
-```
-
-## Security Notes
-
-- Keep ACR admin user disabled unless a later tool has no Microsoft Entra authentication option.
-- Do not commit Azure credentials.
-- Do not put ACR credentials in `.env.example`.
-- Do not bake `DATABASE_URL`, `JWT_SECRET`, Azure Blob Storage connection strings, or registry credentials into images.
-- Later AKS should pull from ACR using managed identity or an explicit pull role assignment.
+This allows the frontend and three backend microservices to be built, versioned, stored, and deployed independently.

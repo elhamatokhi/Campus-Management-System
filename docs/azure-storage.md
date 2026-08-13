@@ -1,66 +1,91 @@
 # Azure Blob Storage
 
-Phase 9 adds Azure Blob Storage support for event images.
+Azure Blob Storage provides file storage for event images in the Campus Management System. It is integrated with the Event Service so that uploaded images are stored separately from the application's relational data.
 
-## Flow
+## Role in the Project
 
-```text
-Admin frontend
-  -> Event Service upload endpoint
-  -> Azure Blob Storage
-  -> image URL
-  -> PostgreSQL Event.imageUrl
-```
+Event images are uploaded by administrators through the Event Service and stored in an Azure Blob Storage container.
 
-Image binary data is not stored in PostgreSQL.
-
-## Manual Azure Setup
-
-Create these Azure resources manually:
-
-- Azure Storage Account
-- Blob container, for example `event-images`
-
-For the current frontend to display uploaded images directly, configure the container or uploaded blobs so they are readable by the browser. A simple university-project option is a container with public blob read access. A production system would normally use private containers with generated SAS URLs.
-
-## Environment Variables
-
-Set these in the root `.env` for local monorepo development:
+The flow is:
 
 ```text
-AZURE_STORAGE_CONNECTION_STRING=your_storage_connection_string
-AZURE_STORAGE_CONTAINER_NAME=event-images
-MAX_IMAGE_UPLOAD_BYTES=5242880
+Admin Frontend
+      ↓
+Event Service
+      ↓
+Azure Blob Storage
+      ↓
+Image URL
+      ↓
+PostgreSQL Event.imageUrl
 ```
 
-Do not commit real Azure credentials.
+The image file itself is not stored in PostgreSQL. Instead, PostgreSQL stores the URL associated with the uploaded image.
 
-## Upload Endpoint
+This separates binary file storage from the application's structured event data.
 
-Admin-only endpoint:
+## Event Service Integration
+
+Image uploads are handled by the admin-protected Event Service endpoint:
 
 ```text
 POST /api/events/upload-image
 ```
 
-Request:
+The endpoint accepts `multipart/form-data` with an `image` field.
+
+Supported image formats are:
+
+- JPEG
+- PNG
+- WebP
+
+The default maximum upload size is 5 MB.
+
+After a successful upload, the Event Service returns the image URL, which can then be stored in the event's `imageUrl` field and displayed by the frontend.
+
+## Configuration
+
+The Event Service uses the following environment variables:
 
 ```text
-Content-Type: multipart/form-data
-Authorization: Bearer <admin-token>
-field name: image
+AZURE_STORAGE_CONNECTION_STRING
+AZURE_STORAGE_CONTAINER_NAME
+MAX_IMAGE_UPLOAD_BYTES
 ```
 
-Allowed file types:
+The storage connection string is treated as a secret and is supplied through runtime configuration rather than being committed to the repository.
 
-- jpg/jpeg
-- png
-- webp
+The container name identifies where event images are stored, while `MAX_IMAGE_UPLOAD_BYTES` controls the allowed upload size.
 
-Default size limit:
+## Image Access
+
+The deployed frontend needs to be able to retrieve event images from Blob Storage.
+
+For the current project, uploaded event images can be made readable by the browser through the configured Blob Storage access model. A production system could further restrict access by using private blobs together with mechanisms such as time-limited SAS URLs.
+
+## Failure Handling
+
+Azure Blob Storage is an external dependency of the image-upload feature rather than a startup dependency of the entire Event Service.
+
+If Blob Storage configuration is unavailable, the Event Service can still run and provide its other functionality. An error is returned when an image upload is attempted without the required storage configuration.
+
+## Role in the Final Architecture
+
+Blob Storage gives the Event Service a dedicated location for binary image data while PostgreSQL remains responsible for structured application data:
 
 ```text
-5 MB
+Event Service
+   │
+   ├── Event data ─────→ PostgreSQL
+   │
+   └── Image files ────→ Azure Blob Storage
+                              │
+                              ↓
+                         Image URL
+                              │
+                              ↓
+                           Frontend
 ```
 
-If Azure credentials are missing, the Event Service still starts normally. The upload endpoint returns a clear configuration error only when an upload is attempted.
+This keeps image storage separate from the relational database while allowing event images to remain connected to their corresponding event records.

@@ -4,7 +4,7 @@ Node.js + Express microservice for users, authentication, profiles, and roles in
 
 ## Responsibility
 
-The User Service will eventually handle:
+The User Service handles:
 
 - Student and admin registration
 - Login
@@ -12,7 +12,7 @@ The User Service will eventually handle:
 - User profile retrieval and updates
 - User roles
 
-As of Phase 7, registration and login use PostgreSQL, hashed passwords, and JWT authentication.
+Registration and login use PostgreSQL, hashed passwords, and JWT authentication.
 
 ## Endpoints
 
@@ -72,8 +72,8 @@ Available variables:
 - `NODE_ENV`: runtime environment
 - `FRONTEND_ORIGIN`: allowed frontend origin for CORS
 - `DATABASE_URL`: PostgreSQL connection string
-- `JWT_SECRET`: future JWT signing secret placeholder
-- `JWT_EXPIRES_IN`: future JWT token lifetime
+- `JWT_SECRET`: JWT signing secret
+- `JWT_EXPIRES_IN`: JWT token lifetime
 
 Do not commit real secrets.
 

@@ -2,27 +2,39 @@
 
 ## Overview
 
-The Campus Event Management System will use a microservice architecture. Each backend service owns one business area, and the React frontend communicates with those services through REST APIs.
+The Campus Management System uses a microservice architecture. Each backend service owns one business area, and the React frontend communicates with those services through REST APIs.
 
-## Target Flow
+## Final Cloud Flow
 
 ```text
-React Frontend
-  -> User Service
-  -> Event Service
-  -> Booking Service
-  -> PostgreSQL
+Browser
+-> React/Vite frontend on Azure Container Apps
+-> nginx same-origin /api proxy
+-> internal Azure Container Apps backend services
+   - User Service
+   - Event Service
+   - Booking Service
+-> Azure Database for PostgreSQL
 ```
 
-Images will be stored outside the database in Azure Blob Storage. The database will store image URLs or references.
+Event images are uploaded through the Event Service to Azure Blob Storage. PostgreSQL stores the resulting image URL, not the binary image data.
 
-## Why Microservices?
+Booking creation also triggers asynchronous serverless processing:
 
-Microservices make the project easier to explain as separate responsibilities:
+```text
+Booking Service
+-> Azure Storage Queue booking-notifications
+-> Azure Function bookingNotificationProcessor
+```
 
-- User Service handles identity and profiles.
-- Event Service handles event data.
-- Booking Service handles reservations.
+## Services
 
-This also demonstrates the cloud concepts required by the assignment: containerized services, orchestration, independent deployments, and REST communication.
+- User Service handles registration, login, JWT authentication, profiles, and roles.
+- Event Service handles public event reads, admin event management, and event image upload.
+- Booking Service handles booking creation, booking lists, cancellation, ownership rules, duplicate booking prevention, capacity checks, and notification queue publishing.
 
+## Deployment
+
+The active deployment target is Azure Container Apps. Docker images are stored in Azure Container Registry and pulled by Container Apps through managed identity with `AcrPull`.
+
+Kubernetes manifests remain under `k8s/` and `kubernetes/` as an original/alternative orchestration artifact, but they are not the live deployment path.

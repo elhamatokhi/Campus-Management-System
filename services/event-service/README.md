@@ -4,7 +4,7 @@ Node.js + Express microservice for campus event management and event image refer
 
 ## Responsibility
 
-The Event Service will eventually handle:
+The Event Service handles:
 
 - Listing campus events
 - Searching and filtering events
@@ -13,9 +13,9 @@ The Event Service will eventually handle:
 - Storing event image references
 - Integrating with Azure Blob Storage for event image uploads
 
-As of Phase 9, event reads are public, event write operations require an admin JWT, and event image uploads use Azure Blob Storage.
+Event reads are public, event write operations require an admin JWT, and event image uploads use Azure Blob Storage.
 
-## Planned Event Fields
+## Event Fields
 
 - `id`
 - `title`

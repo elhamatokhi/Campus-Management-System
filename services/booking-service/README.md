@@ -4,7 +4,7 @@ Node.js + Express microservice for event bookings and availability checks.
 
 ## Responsibility
 
-The Booking Service will eventually handle:
+The Booking Service handles:
 
 - Creating event bookings
 - Listing bookings for the authenticated student or admin
@@ -14,9 +14,9 @@ The Booking Service will eventually handle:
 - Checking event capacity before confirming a booking
 - Publishing booking notification messages to Azure Storage Queue for the Azure Function
 
-As of Phase 7, booking creation, listing, reading, and cancellation require JWT authentication and use PostgreSQL through Prisma.
+Booking creation, listing, reading, and cancellation require JWT authentication and use PostgreSQL through Prisma.
 
-## Planned Booking Fields
+## Booking Fields
 
 - `id`
 - `userId`
@@ -24,12 +24,11 @@ As of Phase 7, booking creation, listing, reading, and cancellation require JWT 
 - `status`
 - `createdAt`
 
-## Planned Service Interactions
+## Service Interactions
 
 The Booking Service communicates with:
 
-- User Service: confirm the authenticated user and role.
-- Event Service: check event details and available capacity.
+- Prisma/PostgreSQL: read users, events, and bookings for persistence and authorization decisions.
 - Azure Storage Queue: publish booking notification messages for the queue-triggered Azure Function.
 
 ## Endpoints
@@ -103,8 +102,8 @@ Available variables:
 - `NODE_ENV`: runtime environment
 - `FRONTEND_ORIGIN`: allowed frontend origin for CORS
 - `DATABASE_URL`: PostgreSQL connection string
-- `USER_SERVICE_URL`: future User Service base URL
-- `EVENT_SERVICE_URL`: future Event Service base URL
+- `USER_SERVICE_URL`: User Service base URL, retained for service-to-service configuration compatibility
+- `EVENT_SERVICE_URL`: Event Service base URL, retained for service-to-service configuration compatibility
 - `BOOKING_NOTIFICATION_STORAGE_CONNECTION_STRING`: Azure Storage connection string used to publish booking notification queue messages. Leave empty locally to skip notification publishing.
 - `BOOKING_NOTIFICATION_QUEUE`: queue name for booking notifications, default `booking-notifications`
 

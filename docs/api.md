@@ -1,6 +1,6 @@
-# API Plan
+# API Reference
 
-All backend services will expose REST APIs and a health endpoint.
+All backend services expose REST APIs and a health endpoint.
 
 ## Standard Error Format
 

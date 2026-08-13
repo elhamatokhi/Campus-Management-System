@@ -25,8 +25,7 @@ When backend services run inside Docker Compose, Compose sets `DATABASE_URL` fro
 ```text
 DATABASE_URL=${LOCAL_DATABASE_URL}
 ```
-
-If the local PostgreSQL password contains reserved URL characters such as `/`, `@`, `:`, `%`, or `#`, percent-encode it in `DATABASE_URL` and `LOCAL_DATABASE_URL`. Keep `POSTGRES_PASSWORD` as the raw password because PostgreSQL itself receives that value.
+Keep `POSTGRES_PASSWORD` as the raw password because PostgreSQL itself receives that value.
 
 ## Cloud Database
 
@@ -40,19 +39,15 @@ Conceptual Azure format:
 DATABASE_URL=postgresql://<admin_user>:<password>@<server-name>.postgres.database.azure.com:5432/<database_name>?sslmode=require
 ```
 
-Use placeholders in documentation and examples only. Keep the real Azure URL outside Git.
-
 ## TLS / SSL
 
-Azure Database for PostgreSQL Flexible Server requires encrypted TLS connections. For Prisma, configure this through connection string parameters.
-
-For this project, use:
+Azure Database for PostgreSQL Flexible Server requires encrypted TLS connections. For Prisma, it is configured through connection string parameters.
 
 ```text
 ?sslmode=require
 ```
 
-Do not disable TLS. Do not hardcode certificates or credentials in source code. If a later deployment requires stricter certificate validation, add the relevant TLS parameters or certificate file path through deployment configuration, not through committed source.
+Do not disable TLS. Do not hardcode certificates or credentials in source code. 
 
 ## Prisma Commands
 
@@ -122,8 +117,6 @@ Both use this demo-only password:
 ```text
 DevPassword123!
 ```
-
-These credentials are not production credentials.
 
 ## Connectivity Verification
 
