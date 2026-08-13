@@ -21,6 +21,13 @@ The project consists of four deployable container images:
 - `campus-booking-service`
 
 Each image represents an independently deployable part of the application. Images are tagged and pushed to the project's Azure Container Registry before being deployed to Azure Container Apps.
+### Deployed Container Images
+
+The Azure Container Registry contains separate repositories for the frontend and the three backend microservices.
+
+![Azure Container Registry repositories](images/azure-container-registry-repositories.png)
+
+These images are built for the Azure deployment and are pulled by Azure Container Apps using managed identity and the `AcrPull` role.
 
 ## Image Build and Push
 
