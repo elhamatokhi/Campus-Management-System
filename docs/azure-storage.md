@@ -24,6 +24,13 @@ The image file itself is not stored in PostgreSQL. Instead, PostgreSQL stores th
 
 This separates binary file storage from the application's structured event data.
 
+## Azure Deployment 
+
+Event images uploaded through the Event Service are stored in the `event-images` Azure Blob Storage container.
+
+![Event images in Azure Blob Storage](images/azure-blob-event-images.png)
+
+The image files are stored in Blob Storage, while PostgreSQL stores the corresponding image URLs as part of the event records.
 ## Event Service Integration
 
 Image uploads are handled by the admin-protected Event Service endpoint:

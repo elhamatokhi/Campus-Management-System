@@ -25,6 +25,14 @@ Cloud Deployment  → Azure Database for PostgreSQL
 
 The backend services connect to the appropriate database through runtime configuration rather than changing application code.
 
+## Azure Deployment 
+
+The production database is hosted using Azure Database for PostgreSQL Flexible Server.
+
+![Azure PostgreSQL Flexible Server](images/azure-postgresql-overview.png)
+
+The Azure deployment provides the managed PostgreSQL instance used by the User, Event, and Booking services for persistent application data.
+
 ## Database Configuration
 
 The main database connection variable used by the backend services is:
