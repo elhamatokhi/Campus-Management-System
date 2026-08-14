@@ -58,7 +58,11 @@ function enqueueBookingNotification(booking) {
 }
 
 export async function createBookingRecord(payload = {}, user) {
-  const userId = isAdmin(user) && payload.userId ? String(payload.userId).trim() : user?.id;
+  if (isAdmin(user)) {
+    throw createHttpError(403, 'Admin users cannot create event bookings');
+  }
+
+  const userId = user?.id;
   const eventId = String(payload.eventId || '').trim();
 
   if (!userId) {

@@ -58,7 +58,7 @@ Admin rules:
 
 - Admin users can list and view all bookings.
 - Admin users may cancel bookings.
-- Admin users may pass `userId` when creating a booking for another user.
+- Admin users cannot create event bookings; booking creation is reserved for students.
 
 ## Local Development
 

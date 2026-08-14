@@ -3,6 +3,7 @@ import Button from './Button.jsx';
 import Input from './Input.jsx';
 import Notice from './Notice.jsx';
 import { buildIsoDateTime, toDateInputValue, toTimeInputValue } from '../utils/eventFormat.js';
+import { eventImageUrl } from '../utils/imageUrl.js';
 
 const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 const maxImageSizeBytes = 5 * 1024 * 1024;
@@ -33,12 +34,13 @@ export default function EventForm({
   const startDate = toDateInputValue(event?.startDate);
   const startTime = toTimeInputValue(event?.startDate);
   const endTime = toTimeInputValue(event?.endDate);
-  const [previewUrl, setPreviewUrl] = useState(event?.imageUrl ?? '');
+  const existingPreviewUrl = event?.imageUrl ? eventImageUrl(event.imageUrl) : '';
+  const [previewUrl, setPreviewUrl] = useState(existingPreviewUrl);
   const [imageError, setImageError] = useState('');
 
   useEffect(() => {
-    setPreviewUrl(event?.imageUrl ?? '');
-  }, [event?.imageUrl]);
+    setPreviewUrl(existingPreviewUrl);
+  }, [existingPreviewUrl]);
 
   useEffect(() => () => {
     if (previewUrl.startsWith('blob:')) {
@@ -143,7 +145,7 @@ export default function EventForm({
             setImageError(validationMessage);
 
             if (!file || validationMessage) {
-              setPreviewUrl(event?.imageUrl ?? '');
+              setPreviewUrl(existingPreviewUrl);
               return;
             }
 

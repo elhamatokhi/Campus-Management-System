@@ -14,7 +14,7 @@ import { eventImageUrl } from '../utils/imageUrl.js';
 export default function EventDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated, isAdmin, token } = useAuth();
   const [event, setEvent] = useState(null);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -111,9 +111,15 @@ export default function EventDetails() {
           {error && <div className="mt-6"><Notice tone="warning">{error}</Notice></div>}
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button onClick={handleBook} disabled={isBooking}>
-              {isBooking ? 'Booking...' : 'Book event'}
-            </Button>
+            {isAdmin ? (
+              <Link to={`/admin/events/${event.id}/edit`}>
+                <Button variant="secondary">Manage event</Button>
+              </Link>
+            ) : (
+              <Button onClick={handleBook} disabled={isBooking}>
+                {isBooking ? 'Booking...' : 'Book event'}
+              </Button>
+            )}
           </div>
         </div>
       </div>

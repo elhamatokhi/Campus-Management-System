@@ -77,6 +77,32 @@ test('successful booking creation publishes a notification after persistence', a
   assert.equal(notifiedBooking.event.title, 'Cybersecurity Workshop');
 });
 
+test('admin users cannot create bookings', async () => {
+  let createCalled = false;
+  let notificationCount = 0;
+
+  configureBookingServiceDependencies({
+    prisma: createMockPrisma({
+      bookingCreate: async () => {
+        createCalled = true;
+        return createdBooking;
+      },
+    }),
+    publishBookingCreatedNotification: async () => {
+      notificationCount += 1;
+    },
+    logger: { warn: () => {} },
+  });
+
+  await assert.rejects(
+    () => createBookingRecord({ eventId: 'event-1' }, { id: 'admin-1', role: 'ADMIN' }),
+    (error) => error.statusCode === 403 && /admin users cannot create event bookings/i.test(error.message),
+  );
+
+  assert.equal(createCalled, false);
+  assert.equal(notificationCount, 0);
+});
+
 test('notification failure does not fail a successfully created booking', async () => {
   const warnings = [];
 
